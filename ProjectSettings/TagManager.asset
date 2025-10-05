@@ -5,6 +5,10 @@ TagManager:
   serializedVersion: 3
   tags:
   - walking area
+  - Hand
+  - Chair
+  - CloseTrigger
+  - OpenTrigger
   layers:
   - Default
   - TransparentFX
