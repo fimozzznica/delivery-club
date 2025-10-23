@@ -3,18 +3,22 @@ using UnityEngine;
 [RequireComponent(typeof(Collider))]
 public class DropoffPoint : MonoBehaviour
 {
+    [Header("Address")]
+    [Tooltip("Адрес этой точки доставки (строка для UI)")]
+    public string deliveryAddress = "Пункт выдачи";
+
     [HideInInspector] public OrderManager manager;
 
     void Awake()
     {
-        Debug.Log($"[DropoffPoint] {name} - Awake()");
+        //Debug.Log($"[DropoffPoint] {name} - Awake(), DeliveryAddress: '{deliveryAddress}'");
         var collider = GetComponent<Collider>();
         if (collider)
         {
-            Debug.Log($"[DropoffPoint] {name} - Найден коллайдер: {collider.GetType()}, IsTrigger: {collider.isTrigger}");
+            //Debug.Log($"[DropoffPoint] {name} - Найден коллайдер: {collider.GetType()}, IsTrigger: {collider.isTrigger}");
             if (!collider.isTrigger)
             {
-                Debug.LogWarning($"[DropoffPoint] {name} - ВНИМАНИЕ! IsTrigger = false. Триггеры не будут работать!");
+                //Debug.LogWarning($"[DropoffPoint] {name} - ВНИМАНИЕ! IsTrigger = false. Триггеры не будут работать!");
             }
         }
         else
@@ -25,12 +29,12 @@ public class DropoffPoint : MonoBehaviour
 
     void Start()
     {
-        Debug.Log($"[DropoffPoint] {name} - Start(), Manager: {(manager ? manager.name : "NULL")}");
+        //Debug.Log($"[DropoffPoint] {name} - Start(), Manager: {(manager ? manager.name : "NULL")}");
     }
 
     void Reset()
     {
-        Debug.Log($"[DropoffPoint] {name} - Reset() вызван");
+        //Debug.Log($"[DropoffPoint] {name} - Reset() вызван");
         var c = GetComponent<Collider>();
         if (c)
         {
@@ -41,7 +45,7 @@ public class DropoffPoint : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        Debug.Log($"[DropoffPoint] {name} - OnTriggerEnter с объектом: {other.name}");
+        //Debug.Log($"[DropoffPoint] {name} - OnTriggerEnter с объектом: {other.name}");
         
         var box = other.GetComponentInParent<Box>();
         if (!box)
@@ -50,9 +54,9 @@ public class DropoffPoint : MonoBehaviour
             return;
         }
 
-        Debug.Log($"[DropoffPoint] {name} - Найдена коробка: {box.name}");
-        Debug.Log($"[DropoffPoint] {name} - Коробка назначена на Dropoff: {(box.assignedDropoff ? box.assignedDropoff.name : "NULL")}");
-        Debug.Log($"[DropoffPoint] {name} - Это правильный Dropoff: {box.assignedDropoff == this}");
+        //Debug.Log($"[DropoffPoint] {name} - Найдена коробка: {box.name}");
+        //Debug.Log($"[DropoffPoint] {name} - Коробка назначена на Dropoff: {(box.assignedDropoff ? box.assignedDropoff.name : "NULL")}");
+        //Debug.Log($"[DropoffPoint] {name} - Это правильный Dropoff: {box.assignedDropoff == this}");
 
         if (box.assignedDropoff == this)
         {
@@ -60,7 +64,7 @@ public class DropoffPoint : MonoBehaviour
             if (manager)
             {
                 bool completed = manager.TryComplete(box, this);
-                Debug.Log($"[DropoffPoint] {name} - Результат TryComplete: {completed}");
+                //Debug.Log($"[DropoffPoint] {name} - Результат TryComplete: {completed}");
             }
             else
             {
@@ -75,11 +79,11 @@ public class DropoffPoint : MonoBehaviour
 
     void OnTriggerExit(Collider other)
     {
-        Debug.Log($"[DropoffPoint] {name} - OnTriggerExit с объектом: {other.name}");
+        //Debug.Log($"[DropoffPoint] {name} - OnTriggerExit с объектом: {other.name}");
     }
 
     void OnDestroy()
     {
-        Debug.Log($"[DropoffPoint] {name} - OnDestroy()");
+        //Debug.Log($"[DropoffPoint] {name} - OnDestroy()");
     }
 }
