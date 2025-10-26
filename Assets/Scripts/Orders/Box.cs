@@ -1,5 +1,3 @@
-using System.Drawing;
-using System.Numerics;
 using UnityEngine;
 
 [DisallowMultipleComponent]
