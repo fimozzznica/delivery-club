@@ -3,9 +3,26 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Events;
 
 public class OrderManager : MonoBehaviour
 {
+    // События для обновления UI
+    [System.Serializable]
+    public class OrderEvent : UnityEvent<Order> { }
+
+    [System.Serializable]
+    public class OrderStateEvent : UnityEvent { }
+
+    [Header("События")]
+    [Tooltip("Вызывается при создании нового заказа")]
+    public OrderEvent OnOrderCreated = new OrderEvent();
+
+    [Tooltip("Вызывается при успешном завершении заказа")]
+    public OrderEvent OnOrderCompleted = new OrderEvent();
+
+    [Tooltip("Вызывается при изменении состояния заказа")]
+    public OrderStateEvent OnOrderStateChanged = new OrderStateEvent();
     [Header("Scene (можно оставить пустым для авто-поиска)")]
     public Box[] boxes;
     public DropoffPoint[] dropoffs;
@@ -23,6 +40,7 @@ public class OrderManager : MonoBehaviour
         public DropoffPoint dropoff;
     }
 
+
     private Order _currentOrder; // Вместо списка - один текущий заказ
     private int _idCounter = 0;
 
@@ -33,7 +51,7 @@ public class OrderManager : MonoBehaviour
     void Awake()
     {
         Debug.Log("[OrderManager] Awake() - Начинаем инициализацию (режим одного заказа)");
-        
+
         if (dropoffs == null || dropoffs.Length == 0)
         {
             Debug.Log("[OrderManager] Dropoffs не заданы, ищем в сцене...");
@@ -103,12 +121,12 @@ public class OrderManager : MonoBehaviour
         Debug.Log("[OrderManager] GenerateLoop() начат");
         var wait = new WaitForSeconds(spawnInterval);
         int loopCounter = 0;
-        
+
         while (true)
         {
             loopCounter++;
             Debug.Log($"[OrderManager] GenerateLoop итерация #{loopCounter}, есть активный заказ: {HasActiveOrder}");
-            
+
             if (!HasActiveOrder)
             {
                 Debug.Log("[OrderManager] Нет активного заказа, пытаемся создать новый...");
@@ -118,7 +136,7 @@ public class OrderManager : MonoBehaviour
             {
                 Debug.Log($"[OrderManager] Уже есть активный заказ ID: {_currentOrder.id}, ждём завершения...");
             }
-            
+
             Debug.Log($"[OrderManager] Ждём {spawnInterval} секунд до следующей попытки...");
             yield return wait;
         }
@@ -127,7 +145,7 @@ public class OrderManager : MonoBehaviour
     public void CreateOrder()
     {
         Debug.Log("[OrderManager] CreateOrder() - Начинаем создание заказа");
-        
+
         if (HasActiveOrder)
         {
             Debug.LogWarning($"[OrderManager] Уже есть активный заказ ID: {_currentOrder.id}! Новый заказ не создан.");
@@ -149,11 +167,11 @@ public class OrderManager : MonoBehaviour
         ).ToList();
 
         Debug.Log($"[OrderManager] Найдено кандидатов: {candidates.Count}");
-        
+
         if (candidates.Count == 0)
         {
             Debug.LogWarning("[OrderManager] Нет подходящих коробок для заказа!");
-            
+
             Debug.Log("[OrderManager] Диагностика коробок:");
             for (int i = 0; i < boxes.Length; i++)
             {
@@ -182,19 +200,23 @@ public class OrderManager : MonoBehaviour
 
         Debug.Log($"[OrderManager] Создан заказ ID: {_currentOrder.id}");
         Debug.Log($"[OrderManager] Назначаем заказ коробке...");
-        
+
         box.Assign(_currentOrder.id, dropoff);
-        
+
         Debug.Log($"[OrderManager] Активируем коробку {box.name}...");
         box.gameObject.SetActive(true);
-        
+
         Debug.Log($"[OrderManager] ✅ ЗАКАЗ СОЗДАН! ID: {_currentOrder.id} | Level: {box.level} | Item: '{box.contentName}' (${box.price}) | From: '{box.pickupAddress}' | To: '{dropoff.deliveryAddress}'");
+
+        // Вызываем события
+        OnOrderCreated?.Invoke(_currentOrder);
+        OnOrderStateChanged?.Invoke();
     }
 
     public bool TryComplete(Box box, DropoffPoint atDropoff)
     {
         Debug.Log($"[OrderManager] TryComplete() - Коробка {box.name} попала в Dropoff {atDropoff.name}");
-        
+
         if (!HasActiveOrder)
         {
             Debug.LogWarning($"[OrderManager] Нет активного заказа! Коробка {box.name} не может быть доставлена.");
@@ -208,7 +230,7 @@ public class OrderManager : MonoBehaviour
         }
 
         Debug.Log($"[OrderManager] Найден текущий заказ ID: {_currentOrder.id}, целевой dropoff: {_currentOrder.dropoff.name}");
-        
+
         if (_currentOrder.dropoff != atDropoff)
         {
             Debug.LogWarning($"[OrderManager] ❌ НЕПРАВИЛЬНЫЙ DROPOFF! Коробка {box.name} попала в {atDropoff.name} ('{atDropoff.deliveryAddress}'), а нужно в {_currentOrder.dropoff.name} ('{_currentOrder.dropoff.deliveryAddress}')");
@@ -216,22 +238,29 @@ public class OrderManager : MonoBehaviour
         }
 
         Debug.Log($"[OrderManager] ✅ ПРАВИЛЬНЫЙ DROPOFF! Завершаем заказ {_currentOrder.id}");
-        
+
         Debug.Log($"[OrderManager] Возвращаем коробку {box.name} в домашнюю позицию...");
         box.ReturnHome();
 
         Debug.Log($"[OrderManager] Очищаем назначение коробки...");
         box.ClearAssignment();
-        
+
         Debug.Log($"[OrderManager] Выключаем коробку {box.name}...");
         box.gameObject.SetActive(false);
 
         Debug.Log($"[OrderManager] 🎉 ЗАКАЗ ДОСТАВЛЕН! ID: {_currentOrder.id} | Item: '{box.contentName}' (${box.price}) | From: '{box.pickupAddress}' | To: '{atDropoff.deliveryAddress}'");
-        
+
+        // Сохраняем заказ для события перед очисткой
+        Order completedOrder = _currentOrder;
+
         // Очищаем текущий заказ
         _currentOrder = null;
         Debug.Log("[OrderManager] Текущий заказ очищен, готов к созданию нового");
-        
+
+        // Вызываем события
+        OnOrderCompleted?.Invoke(completedOrder);
+        OnOrderStateChanged?.Invoke();
+
         return true;
     }
 

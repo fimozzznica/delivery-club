@@ -4,8 +4,8 @@ using UnityEngine;
 public class DropoffPoint : MonoBehaviour
 {
     [Header("Address")]
-    [Tooltip("Адрес этой точки доставки (строка для UI)")]
-    public string deliveryAddress = "Пункт выдачи";
+    [Tooltip("РђРґСЂРµСЃ СЌС‚РѕР№ С‚РѕС‡РєРё РґРѕСЃС‚Р°РІРєРё (СЃС‚СЂРѕРєР° РґР»СЏ UI)")]
+    public string deliveryAddress = "РџСѓРЅРєС‚ РІС‹РґР°С‡Рё";
 
     [HideInInspector] public OrderManager manager;
 
@@ -15,15 +15,15 @@ public class DropoffPoint : MonoBehaviour
         var collider = GetComponent<Collider>();
         if (collider)
         {
-            //Debug.Log($"[DropoffPoint] {name} - Найден коллайдер: {collider.GetType()}, IsTrigger: {collider.isTrigger}");
+            //Debug.Log($"[DropoffPoint] {name} - РќР°Р№РґРµРЅ РєРѕР»Р»Р°Р№РґРµСЂ: {collider.GetType()}, IsTrigger: {collider.isTrigger}");
             if (!collider.isTrigger)
             {
-                //Debug.LogWarning($"[DropoffPoint] {name} - ВНИМАНИЕ! IsTrigger = false. Триггеры не будут работать!");
+                //Debug.LogWarning($"[DropoffPoint] {name} - Р’РќРРњРђРќРР•! IsTrigger = false. РўСЂРёРіРіРµСЂС‹ РЅРµ Р±СѓРґСѓС‚ СЂР°Р±РѕС‚Р°С‚СЊ!");
             }
         }
         else
         {
-            Debug.LogError($"[DropoffPoint] {name} - НЕТ КОЛЛАЙДЕРА! Компонент не будет работать!");
+            Debug.LogError($"[DropoffPoint] {name} - РќР•Рў РљРћР›Р›РђР™Р”Р•Р Рђ! РљРѕРјРїРѕРЅРµРЅС‚ РЅРµ Р±СѓРґРµС‚ СЂР°Р±РѕС‚Р°С‚СЊ!");
         }
     }
 
@@ -34,52 +34,52 @@ public class DropoffPoint : MonoBehaviour
 
     void Reset()
     {
-        //Debug.Log($"[DropoffPoint] {name} - Reset() вызван");
+        //Debug.Log($"[DropoffPoint] {name} - Reset() РІС‹Р·РІР°РЅ");
         var c = GetComponent<Collider>();
         if (c)
         {
             c.isTrigger = true;
-            Debug.Log($"[DropoffPoint] {name} - Автоматически установлен IsTrigger = true");
+            Debug.Log($"[DropoffPoint] {name} - РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРё СѓСЃС‚Р°РЅРѕРІР»РµРЅ IsTrigger = true");
         }
     }
 
     void OnTriggerEnter(Collider other)
     {
-        //Debug.Log($"[DropoffPoint] {name} - OnTriggerEnter с объектом: {other.name}");
-        
+        //Debug.Log($"[DropoffPoint] {name} - OnTriggerEnter СЃ РѕР±СЉРµРєС‚РѕРј: {other.name}");
+
         var box = other.GetComponentInParent<Box>();
         if (!box)
         {
-            Debug.Log($"[DropoffPoint] {name} - Объект {other.name} не содержит компонент Box или его родители");
+            Debug.Log($"[DropoffPoint] {name} - РћР±СЉРµРєС‚ {other.name} РЅРµ СЃРѕРґРµСЂР¶РёС‚ РєРѕРјРїРѕРЅРµРЅС‚ Box РёР»Рё РµРіРѕ СЂРѕРґРёС‚РµР»Рё");
             return;
         }
 
-        //Debug.Log($"[DropoffPoint] {name} - Найдена коробка: {box.name}");
-        //Debug.Log($"[DropoffPoint] {name} - Коробка назначена на Dropoff: {(box.assignedDropoff ? box.assignedDropoff.name : "NULL")}");
-        //Debug.Log($"[DropoffPoint] {name} - Это правильный Dropoff: {box.assignedDropoff == this}");
+        //Debug.Log($"[DropoffPoint] {name} - РќР°Р№РґРµРЅР° РєРѕСЂРѕР±РєР°: {box.name}");
+        //Debug.Log($"[DropoffPoint] {name} - РљРѕСЂРѕР±РєР° РЅР°Р·РЅР°С‡РµРЅР° РЅР° Dropoff: {(box.assignedDropoff ? box.assignedDropoff.name : "NULL")}");
+        //Debug.Log($"[DropoffPoint] {name} - Р­С‚Рѕ РїСЂР°РІРёР»СЊРЅС‹Р№ Dropoff: {box.assignedDropoff == this}");
 
         if (box.assignedDropoff == this)
         {
-            Debug.Log($"[DropoffPoint] {name} - ? Правильная коробка! Отправляем в менеджер...");
+            Debug.Log($"[DropoffPoint] {name} - ? РџСЂР°РІРёР»СЊРЅР°СЏ РєРѕСЂРѕР±РєР°! РћС‚РїСЂР°РІР»СЏРµРј РІ РјРµРЅРµРґР¶РµСЂ...");
             if (manager)
             {
                 bool completed = manager.TryComplete(box, this);
-                //Debug.Log($"[DropoffPoint] {name} - Результат TryComplete: {completed}");
+                //Debug.Log($"[DropoffPoint] {name} - Р РµР·СѓР»СЊС‚Р°С‚ TryComplete: {completed}");
             }
             else
             {
-                Debug.LogError($"[DropoffPoint] {name} - НЕТ МЕНЕДЖЕРА! Не могу завершить заказ.");
+                Debug.LogError($"[DropoffPoint] {name} - РќР•Рў РњР•РќР•Р”Р–Р•Р Рђ! РќРµ РјРѕРіСѓ Р·Р°РІРµСЂС€РёС‚СЊ Р·Р°РєР°Р·.");
             }
         }
         else
         {
-            Debug.Log($"[DropoffPoint] {name} - ? Неправильная коробка для этого Dropoff");
+            Debug.Log($"[DropoffPoint] {name} - ? РќРµРїСЂР°РІРёР»СЊРЅР°СЏ РєРѕСЂРѕР±РєР° РґР»СЏ СЌС‚РѕРіРѕ Dropoff");
         }
     }
 
     void OnTriggerExit(Collider other)
     {
-        //Debug.Log($"[DropoffPoint] {name} - OnTriggerExit с объектом: {other.name}");
+        //Debug.Log($"[DropoffPoint] {name} - OnTriggerExit СЃ РѕР±СЉРµРєС‚РѕРј: {other.name}");
     }
 
     void OnDestroy()
