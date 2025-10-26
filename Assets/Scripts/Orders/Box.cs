@@ -19,6 +19,10 @@ public class Box : MonoBehaviour
     public string orderId;
     public DropoffPoint assignedDropoff;
 
+    [Header("References")]
+    [Tooltip("Ссылка на OrderManager для проверки разрешений")]
+    public OrderManager orderManager;
+
     [Header("Home Position (saved on first activation)")]
     [SerializeField] private bool _homePositionSaved = false;
     [SerializeField] private Vector3 _homePosition;
@@ -27,15 +31,24 @@ public class Box : MonoBehaviour
     public bool IsAssigned => !string.IsNullOrEmpty(orderId);
     public bool HasHomePosition => _homePositionSaved;
 
+    private Rigidbody _rigidbody;
+    private bool _canBePickedUp = false;
+
     void Awake()
     {
         //Debug.Log($"[Box] {name} - Awake() | Level: {level}, Content: '{contentName}', Price: {price}, PickupAddress: '{pickupAddress}', Active: {gameObject.activeInHierarchy}");
         //Debug.Log($"[Box] {name} - Home position saved: {_homePositionSaved}");
-        
+
         var collider = GetComponent<Collider>();
-        var rigidbody = GetComponent<Rigidbody>();
-        
-        //Debug.Log($"[Box] {name} - Компоненты: Collider={collider != null}, Rigidbody={rigidbody != null}");
+        _rigidbody = GetComponent<Rigidbody>();
+
+        // Ищем OrderManager если не назначен
+        if (orderManager == null)
+        {
+            orderManager = FindObjectOfType<OrderManager>();
+        }
+
+        //Debug.Log($"[Box] {name} - Компоненты: Collider={collider != null}, Rigidbody={_rigidbody != null}");
     }
 
     void Start()
@@ -46,11 +59,18 @@ public class Box : MonoBehaviour
     void OnEnable()
     {
         //Debug.Log($"[Box] {name} - OnEnable() | IsAssigned: {IsAssigned}");
-        
+
         // Сохраняем домашнюю позицию при первой активации
         if (!_homePositionSaved)
         {
             SaveHomePosition();
+        }
+
+        // Делаем коробку кинематической до разрешения на взятие
+        _canBePickedUp = false;
+        if (_rigidbody != null)
+        {
+            _rigidbody.isKinematic = true;
         }
     }
 
@@ -70,7 +90,7 @@ public class Box : MonoBehaviour
         _homePosition = transform.position;
         _homeRotation = transform.rotation;
         _homePositionSaved = true;
-        
+
         //Debug.Log($"[Box] {name} - SaveHomePosition() - сохранена домашняя позиция: {_homePosition}, поворот: {_homeRotation}");
     }
 
@@ -83,10 +103,10 @@ public class Box : MonoBehaviour
         }
 
         //Debug.Log($"[Box] {name} - ReturnHome() - возвращаем с позиции {transform.position} в домашнюю {_homePosition}");
-        
+
         Vector3 oldPos = transform.position;
         Quaternion oldRot = transform.rotation;
-        
+
         transform.SetPositionAndRotation(_homePosition, _homeRotation);
 
         //Debug.Log($"[Box] {name} - Позиция изменена с {oldPos} на {transform.position}");
@@ -109,15 +129,22 @@ public class Box : MonoBehaviour
     public void Assign(string id, DropoffPoint dropoff)
     {
         Debug.Log($"[Box] {name} - Assign() вызван с ID: '{id}', Dropoff: {(dropoff ? dropoff.name : "NULL")}");
-        
+
         string oldOrderId = orderId;
         DropoffPoint oldDropoff = assignedDropoff;
         string oldName = name;
-        
+
         orderId = id;
         assignedDropoff = dropoff;
         name = $"Box_{orderId}";
-        
+
+        // Блокируем взятие до начала заказа
+        _canBePickedUp = false;
+        if (_rigidbody != null)
+        {
+            _rigidbody.isKinematic = true;
+        }
+
         //Debug.Log($"[Box] {name} - Назначение изменено:");
         //Debug.Log($"[Box] {name} -   OrderID: '{oldOrderId}' -> '{orderId}'");
         //Debug.Log($"[Box] {name} -   Dropoff: {(oldDropoff ? oldDropoff.name : "NULL")} -> {(assignedDropoff ? assignedDropoff.name : "NULL")}");
@@ -128,20 +155,66 @@ public class Box : MonoBehaviour
     public void ClearAssignment()
     {
         //Debug.Log($"[Box] {name} - ClearAssignment() вызван");
-        
+
         string oldOrderId = orderId;
         DropoffPoint oldDropoff = assignedDropoff;
         string oldName = name;
-        
+
         orderId = null;
         assignedDropoff = null;
         name = "Box";
-        
+
         //Debug.Log($"[Box] {name} - Назначение очищено:");
         //Debug.Log($"[Box] {name} -   OrderID: '{oldOrderId}' -> '{orderId}'");
         //Debug.Log($"[Box] {name} -   Dropoff: {(oldDropoff ? oldDropoff.name : "NULL")} -> NULL");
         //Debug.Log($"[Box] {name} -   Name: '{oldName}' -> '{name}'");
         //Debug.Log($"[Box] {name} -   IsAssigned: {IsAssigned}");
+    }
+
+    /// <summary>
+    /// Попытка взять коробку (вызывается из системы взаимодействия)
+    /// </summary>
+    public bool TryPickup()
+    {
+        if (!IsAssigned)
+        {
+            Debug.LogWarning($"[Box] {name} - TryPickup() - коробка не назначена на заказ!");
+            return false;
+        }
+
+        if (orderManager == null)
+        {
+            Debug.LogWarning($"[Box] {name} - TryPickup() - OrderManager не найден!");
+            return false;
+        }
+
+        // Проверяем разрешение через OrderManager
+        if (!orderManager.CanPickupBox(this))
+        {
+            Debug.LogWarning($"[Box] {name} - TryPickup() - OrderManager не разрешил взятие!");
+            return false;
+        }
+
+        // Разрешаем взятие
+        _canBePickedUp = true;
+        if (_rigidbody != null)
+        {
+            _rigidbody.isKinematic = false;
+        }
+
+        Debug.Log($"[Box] {name} - TryPickup() - ✅ Коробку можно взять!");
+        return true;
+    }
+
+    /// <summary>
+    /// Проверить, можно ли взять коробку
+    /// </summary>
+    public bool CanPickup()
+    {
+        if (!IsAssigned || orderManager == null)
+            return false;
+
+        return orderManager.CanPickupBox(this);
     }
 
     void OnTriggerEnter(Collider other)

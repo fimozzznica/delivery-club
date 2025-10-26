@@ -43,10 +43,12 @@ public class OrderManager : MonoBehaviour
 
     private Order _currentOrder; // Вместо списка - один текущий заказ
     private int _idCounter = 0;
+    private bool _orderStarted = false; // Флаг "заказ начат"
 
     // Публичное свойство для доступа к текущему заказу из UI
     public Order CurrentOrder => _currentOrder;
     public bool HasActiveOrder => _currentOrder != null;
+    public bool IsOrderStarted => _orderStarted;
 
     void Awake()
     {
@@ -208,9 +210,65 @@ public class OrderManager : MonoBehaviour
 
         Debug.Log($"[OrderManager] ✅ ЗАКАЗ СОЗДАН! ID: {_currentOrder.id} | Level: {box.level} | Item: '{box.contentName}' (${box.price}) | From: '{box.pickupAddress}' | To: '{dropoff.deliveryAddress}'");
 
+        // Сбрасываем флаг "начат" для нового заказа
+        _orderStarted = false;
+        Debug.Log("[OrderManager] Флаг orderStarted сброшен для нового заказа");
+
         // Вызываем события
         OnOrderCreated?.Invoke(_currentOrder);
         OnOrderStateChanged?.Invoke();
+    }
+
+    /// <summary>
+    /// Начать выполнение текущего заказа
+    /// </summary>
+    public bool StartOrder()
+    {
+        if (!HasActiveOrder)
+        {
+            Debug.LogWarning("[OrderManager] StartOrder() - Нет активного заказа для начала!");
+            return false;
+        }
+
+        if (_orderStarted)
+        {
+            Debug.LogWarning($"[OrderManager] StartOrder() - Заказ {_currentOrder.id} уже начат!");
+            return false;
+        }
+
+        _orderStarted = true;
+        Debug.Log($"[OrderManager] ✅ Заказ {_currentOrder.id} НАЧАТ! Теперь можно взять коробку.");
+
+        // Вызываем событие изменения состояния
+        OnOrderStateChanged?.Invoke();
+
+        return true;
+    }
+
+    /// <summary>
+    /// Проверить, можно ли взять коробку
+    /// </summary>
+    public bool CanPickupBox(Box box)
+    {
+        if (!HasActiveOrder)
+        {
+            Debug.LogWarning("[OrderManager] CanPickupBox() - Нет активного заказа!");
+            return false;
+        }
+
+        if (_currentOrder.box != box)
+        {
+            Debug.LogWarning("[OrderManager] CanPickupBox() - Эта коробка не относится к текущему заказу!");
+            return false;
+        }
+
+        if (!_orderStarted)
+        {
+            Debug.LogWarning("[OrderManager] CanPickupBox() - Заказ не начат! Нажмите 'Начать заказ' сначала.");
+            return false;
+        }
+
+        return true;
     }
 
     public bool TryComplete(Box box, DropoffPoint atDropoff)
@@ -220,6 +278,12 @@ public class OrderManager : MonoBehaviour
         if (!HasActiveOrder)
         {
             Debug.LogWarning($"[OrderManager] Нет активного заказа! Коробка {box.name} не может быть доставлена.");
+            return false;
+        }
+
+        if (!_orderStarted)
+        {
+            Debug.LogWarning($"[OrderManager] Заказ {_currentOrder.id} не начат! Нельзя завершить.");
             return false;
         }
 
@@ -253,9 +317,10 @@ public class OrderManager : MonoBehaviour
         // Сохраняем заказ для события перед очисткой
         Order completedOrder = _currentOrder;
 
-        // Очищаем текущий заказ
+        // Очищаем текущий заказ и флаг
         _currentOrder = null;
-        Debug.Log("[OrderManager] Текущий заказ очищен, готов к созданию нового");
+        _orderStarted = false;
+        Debug.Log("[OrderManager] Текущий заказ очищен, флаг orderStarted сброшен, готов к созданию нового");
 
         // Вызываем события
         OnOrderCompleted?.Invoke(completedOrder);
