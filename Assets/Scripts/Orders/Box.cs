@@ -36,9 +36,6 @@ public class Box : MonoBehaviour
 
     void Awake()
     {
-        //Debug.Log($"[Box] {name} - Awake() | Level: {level}, Content: '{contentName}', Price: {price}, PickupAddress: '{pickupAddress}', Active: {gameObject.activeInHierarchy}");
-        //Debug.Log($"[Box] {name} - Home position saved: {_homePositionSaved}");
-
         var collider = GetComponent<Collider>();
         _rigidbody = GetComponent<Rigidbody>();
 
@@ -47,19 +44,10 @@ public class Box : MonoBehaviour
         {
             orderManager = FindObjectOfType<OrderManager>();
         }
-
-        //Debug.Log($"[Box] {name} - Компоненты: Collider={collider != null}, Rigidbody={_rigidbody != null}");
-    }
-
-    void Start()
-    {
-        Debug.Log($"[Box] {name} - Start() | IsAssigned: {IsAssigned}, OrderID: '{orderId}', AssignedDropoff: {(assignedDropoff ? assignedDropoff.name : "NULL")}");
     }
 
     void OnEnable()
     {
-        //Debug.Log($"[Box] {name} - OnEnable() | IsAssigned: {IsAssigned}");
-
         // Сохраняем домашнюю позицию при первой активации
         if (!_homePositionSaved)
         {
@@ -74,66 +62,39 @@ public class Box : MonoBehaviour
         }
     }
 
-    void OnDisable()
-    {
-        //Debug.Log($"[Box] {name} - OnDisable() | IsAssigned: {IsAssigned}");
-    }
-
     public void SaveHomePosition()
     {
         if (_homePositionSaved)
         {
-            //Debug.Log($"[Box] {name} - SaveHomePosition() - позиция уже сохранена, пропускаем");
             return;
         }
 
         _homePosition = transform.position;
         _homeRotation = transform.rotation;
         _homePositionSaved = true;
-
-        //Debug.Log($"[Box] {name} - SaveHomePosition() - сохранена домашняя позиция: {_homePosition}, поворот: {_homeRotation}");
     }
 
     public void ReturnHome()
     {
         if (!_homePositionSaved)
         {
-            Debug.LogWarning($"[Box] {name} - ReturnHome() - домашняя позиция не сохранена! Не могу вернуть коробку домой.");
+            Debug.LogWarning($"[Box] {name} - домашняя позиция не сохранена!");
             return;
         }
 
-        //Debug.Log($"[Box] {name} - ReturnHome() - возвращаем с позиции {transform.position} в домашнюю {_homePosition}");
-
-        Vector3 oldPos = transform.position;
-        Quaternion oldRot = transform.rotation;
-
         transform.SetPositionAndRotation(_homePosition, _homeRotation);
-
-        //Debug.Log($"[Box] {name} - Позиция изменена с {oldPos} на {transform.position}");
-        //Debug.Log($"[Box] {name} - Поворот изменён с {oldRot} на {transform.rotation}");
 
         // Обнуляем физику
         var rb = GetComponent<Rigidbody>();
         if (rb)
         {
-            //Debug.Log($"[Box] {name} - Обнуляем физику Rigidbody: velocity={rb.velocity}, angularVelocity={rb.angularVelocity}");
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
-        }
-        else
-        {
-            //Debug.LogWarning($"[Box] {name} - У коробки нет Rigidbody!");
         }
     }
 
     public void Assign(string id, DropoffPoint dropoff)
     {
-        Debug.Log($"[Box] {name} - Assign() вызван с ID: '{id}', Dropoff: {(dropoff ? dropoff.name : "NULL")}");
-
-        string oldOrderId = orderId;
-        DropoffPoint oldDropoff = assignedDropoff;
-        string oldName = name;
-
         orderId = id;
         assignedDropoff = dropoff;
         name = $"Box_{orderId}";
@@ -144,31 +105,13 @@ public class Box : MonoBehaviour
         {
             _rigidbody.isKinematic = true;
         }
-
-        //Debug.Log($"[Box] {name} - Назначение изменено:");
-        //Debug.Log($"[Box] {name} -   OrderID: '{oldOrderId}' -> '{orderId}'");
-        //Debug.Log($"[Box] {name} -   Dropoff: {(oldDropoff ? oldDropoff.name : "NULL")} -> {(assignedDropoff ? assignedDropoff.name : "NULL")}");
-        //Debug.Log($"[Box] {name} -   Name: '{oldName}' -> '{name}'");
-        //Debug.Log($"[Box] {name} -   IsAssigned: {IsAssigned}");
     }
 
     public void ClearAssignment()
     {
-        //Debug.Log($"[Box] {name} - ClearAssignment() вызван");
-
-        string oldOrderId = orderId;
-        DropoffPoint oldDropoff = assignedDropoff;
-        string oldName = name;
-
         orderId = null;
         assignedDropoff = null;
         name = "Box";
-
-        //Debug.Log($"[Box] {name} - Назначение очищено:");
-        //Debug.Log($"[Box] {name} -   OrderID: '{oldOrderId}' -> '{orderId}'");
-        //Debug.Log($"[Box] {name} -   Dropoff: {(oldDropoff ? oldDropoff.name : "NULL")} -> NULL");
-        //Debug.Log($"[Box] {name} -   Name: '{oldName}' -> '{name}'");
-        //Debug.Log($"[Box] {name} -   IsAssigned: {IsAssigned}");
     }
 
     /// <summary>
@@ -176,22 +119,14 @@ public class Box : MonoBehaviour
     /// </summary>
     public bool TryPickup()
     {
-        if (!IsAssigned)
+        if (!IsAssigned || orderManager == null)
         {
-            Debug.LogWarning($"[Box] {name} - TryPickup() - коробка не назначена на заказ!");
-            return false;
-        }
-
-        if (orderManager == null)
-        {
-            Debug.LogWarning($"[Box] {name} - TryPickup() - OrderManager не найден!");
             return false;
         }
 
         // Проверяем разрешение через OrderManager
         if (!orderManager.CanPickupBox(this))
         {
-            Debug.LogWarning($"[Box] {name} - TryPickup() - OrderManager не разрешил взятие!");
             return false;
         }
 
@@ -202,7 +137,6 @@ public class Box : MonoBehaviour
             _rigidbody.isKinematic = false;
         }
 
-        Debug.Log($"[Box] {name} - TryPickup() - ✅ Коробку можно взять!");
         return true;
     }
 
@@ -215,21 +149,6 @@ public class Box : MonoBehaviour
             return false;
 
         return orderManager.CanPickupBox(this);
-    }
-
-    void OnTriggerEnter(Collider other)
-    {
-        //Debug.Log($"[Box] {name} - OnTriggerEnter с {other.name}");
-    }
-
-    void OnCollisionEnter(Collision collision)
-    {
-        //Debug.Log($"[Box] {name} - OnCollisionEnter с {collision.gameObject.name}");
-    }
-
-    void OnDestroy()
-    {
-        //Debug.Log($"[Box] {name} - OnDestroy() | IsAssigned: {IsAssigned}, OrderID: '{orderId}'");
     }
 
 #if UNITY_EDITOR

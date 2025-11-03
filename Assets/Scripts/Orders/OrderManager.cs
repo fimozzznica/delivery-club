@@ -52,17 +52,9 @@ public class OrderManager : MonoBehaviour
 
     void Awake()
     {
-        Debug.Log("[OrderManager] Awake() - Начинаем инициализацию (режим одного заказа)");
-
         if (dropoffs == null || dropoffs.Length == 0)
         {
-            Debug.Log("[OrderManager] Dropoffs не заданы, ищем в сцене...");
             dropoffs = FindObjectsOfType<DropoffPoint>();
-            Debug.Log($"[OrderManager] Найдено DropoffPoint в сцене: {dropoffs.Length}");
-        }
-        else
-        {
-            Debug.Log($"[OrderManager] Используем заданные Dropoffs: {dropoffs.Length}");
         }
 
         foreach (var d in dropoffs)
@@ -70,7 +62,6 @@ public class OrderManager : MonoBehaviour
             if (d != null)
             {
                 d.manager = this;
-                Debug.Log($"[OrderManager] Присвоен manager для DropoffPoint: {d.name} (адрес: '{d.deliveryAddress}')");
             }
             else
             {
@@ -78,22 +69,29 @@ public class OrderManager : MonoBehaviour
             }
         }
 
+        // Фильтруем NULL элементы из массива dropoffs
+        dropoffs = dropoffs.Where(d => d != null).ToArray();
+
+        if (dropoffs.Length == 0)
+        {
+            Debug.LogError("[OrderManager] НЕТ ВАЛИДНЫХ DROPOFFS после фильтрации!");
+        }
+
         if (boxes == null || boxes.Length == 0)
         {
-            Debug.Log("[OrderManager] Boxes не заданы, ищем в сцене (включая выключенные)...");
             boxes = FindObjectsOfType<Box>(true);
-            Debug.Log($"[OrderManager] Найдено Box в сцене: {boxes.Length}");
-        }
-        else
-        {
-            Debug.Log($"[OrderManager] Используем заданные Boxes: {boxes.Length}");
         }
 
         for (int i = 0; i < boxes.Length; i++)
         {
             if (boxes[i] != null)
             {
-                Debug.Log($"[OrderManager] Box[{i}]: {boxes[i].name}, Level: {boxes[i].level}, Content: '{boxes[i].contentName}', Price: {boxes[i].price}, PickupAddress: '{boxes[i].pickupAddress}', Active: {boxes[i].gameObject.activeInHierarchy}");
+                // Проверяем родителей коробки
+                if (!IsParentHierarchyActive(boxes[i].transform))
+                {
+                    string inactiveParent = GetFirstInactiveParent(boxes[i].transform);
+                    Debug.LogWarning($"[OrderManager] ⚠️ Box '{boxes[i].name}' имеет неактивного родителя '{inactiveParent}' и НЕ БУДЕТ участвовать в заказах!");
+                }
             }
             else
             {
@@ -101,97 +99,86 @@ public class OrderManager : MonoBehaviour
             }
         }
 
-        Debug.Log("[OrderManager] Awake() завершён");
+        // Фильтруем NULL элементы из массива boxes
+        boxes = boxes.Where(b => b != null).ToArray();
+
+        if (boxes.Length == 0)
+        {
+            Debug.LogError("[OrderManager] НЕТ ВАЛИДНЫХ BOXES после фильтрации!");
+        }
     }
 
     void Start()
     {
-        Debug.Log($"[OrderManager] Start() - AutoGenerate: {autoGenerate}");
         if (autoGenerate)
         {
-            Debug.Log($"[OrderManager] Запускаем автогенерацию с интервалом {spawnInterval} сек (один заказ за раз)");
             StartCoroutine(GenerateLoop());
-        }
-        else
-        {
-            Debug.Log("[OrderManager] Автогенерация отключена");
         }
     }
 
     IEnumerator GenerateLoop()
     {
-        Debug.Log("[OrderManager] GenerateLoop() начат");
         var wait = new WaitForSeconds(spawnInterval);
-        int loopCounter = 0;
 
         while (true)
         {
-            loopCounter++;
-            Debug.Log($"[OrderManager] GenerateLoop итерация #{loopCounter}, есть активный заказ: {HasActiveOrder}");
-
             if (!HasActiveOrder)
             {
-                Debug.Log("[OrderManager] Нет активного заказа, пытаемся создать новый...");
                 CreateOrder();
             }
-            else
-            {
-                Debug.Log($"[OrderManager] Уже есть активный заказ ID: {_currentOrder.id}, ждём завершения...");
-            }
 
-            Debug.Log($"[OrderManager] Ждём {spawnInterval} секунд до следующей попытки...");
             yield return wait;
         }
     }
 
     public void CreateOrder()
     {
-        Debug.Log("[OrderManager] CreateOrder() - Начинаем создание заказа");
-
         if (HasActiveOrder)
         {
-            Debug.LogWarning($"[OrderManager] Уже есть активный заказ ID: {_currentOrder.id}! Новый заказ не создан.");
+            Debug.LogWarning($"[OrderManager] Уже есть активный заказ ID: {_currentOrder.id}!");
             return;
         }
 
         if (dropoffs == null || dropoffs.Length == 0)
         {
-            Debug.LogError("[OrderManager] CreateOrder() - НЕТ DROPOFFS! Заказ не создан.");
+            Debug.LogError("[OrderManager] НЕТ DROPOFFS! Заказ не создан.");
             return;
         }
 
-        Debug.Log("[OrderManager] Ищем подходящие коробки...");
         var candidates = boxes.Where(b =>
             b != null &&
-            !b.gameObject.activeInHierarchy &&
+            !b.gameObject.activeSelf &&
             !b.IsAssigned &&
-            IsLevelUnlocked(b.level)
+            IsLevelUnlocked(b.level) &&
+            IsParentHierarchyActive(b.transform)
         ).ToList();
-
-        Debug.Log($"[OrderManager] Найдено кандидатов: {candidates.Count}");
 
         if (candidates.Count == 0)
         {
             Debug.LogWarning("[OrderManager] Нет подходящих коробок для заказа!");
-
-            Debug.Log("[OrderManager] Диагностика коробок:");
-            for (int i = 0; i < boxes.Length; i++)
-            {
-                if (boxes[i] != null)
-                {
-                    Debug.Log($"[OrderManager]   Box[{i}] {boxes[i].name}: Active={boxes[i].gameObject.activeInHierarchy}, Assigned={boxes[i].IsAssigned}, Level={boxes[i].level}, LevelUnlocked={IsLevelUnlocked(boxes[i].level)}");
-                }
-            }
             return;
         }
 
         int boxIndex = UnityEngine.Random.Range(0, candidates.Count);
         var box = candidates[boxIndex];
-        Debug.Log($"[OrderManager] Выбрана коробка: {box.name} (индекс {boxIndex} из {candidates.Count} кандидатов)");
 
-        int dropoffIndex = UnityEngine.Random.Range(0, dropoffs.Length);
-        var dropoff = dropoffs[dropoffIndex];
-        Debug.Log($"[OrderManager] Выбран dropoff: {dropoff.name} (адрес: '{dropoff.deliveryAddress}', индекс {dropoffIndex} из {dropoffs.Length} доступных)");
+        // Фильтруем валидные dropoffs перед случайным выбором
+        var validDropoffs = dropoffs.Where(d => d != null).ToArray();
+        if (validDropoffs.Length == 0)
+        {
+            Debug.LogError("[OrderManager] НЕТ ВАЛИДНЫХ DROPOFFS! Заказ не создан.");
+            return;
+        }
+
+        int dropoffIndex = UnityEngine.Random.Range(0, validDropoffs.Length);
+        var dropoff = validDropoffs[dropoffIndex];
+
+        // Дополнительная проверка безопасности
+        if (dropoff == null)
+        {
+            Debug.LogError("[OrderManager] Выбранный dropoff оказался NULL! Заказ не создан.");
+            return;
+        }
 
         _currentOrder = new Order
         {
@@ -200,19 +187,19 @@ public class OrderManager : MonoBehaviour
             dropoff = dropoff
         };
 
-        Debug.Log($"[OrderManager] Создан заказ ID: {_currentOrder.id}");
-        Debug.Log($"[OrderManager] Назначаем заказ коробке...");
-
         box.Assign(_currentOrder.id, dropoff);
-
-        Debug.Log($"[OrderManager] Активируем коробку {box.name}...");
         box.gameObject.SetActive(true);
 
-        Debug.Log($"[OrderManager] ✅ ЗАКАЗ СОЗДАН! ID: {_currentOrder.id} | Level: {box.level} | Item: '{box.contentName}' (${box.price}) | From: '{box.pickupAddress}' | To: '{dropoff.deliveryAddress}'");
+        // Дополнительная проверка на случай, если что-то пошло не так
+        if (!box.gameObject.activeInHierarchy)
+        {
+            Debug.LogError($"[OrderManager] ❌ Коробка {box.name} не стала активной в иерархии! Проверьте родительские объекты!");
+        }
+
+        Debug.Log($"[OrderManager] ✅ Заказ #{_currentOrder.id} создан: '{box.contentName}' → '{dropoff.deliveryAddress}'");
 
         // Сбрасываем флаг "начат" для нового заказа
         _orderStarted = false;
-        Debug.Log("[OrderManager] Флаг orderStarted сброшен для нового заказа");
 
         // Вызываем события
         OnOrderCreated?.Invoke(_currentOrder);
@@ -226,18 +213,17 @@ public class OrderManager : MonoBehaviour
     {
         if (!HasActiveOrder)
         {
-            Debug.LogWarning("[OrderManager] StartOrder() - Нет активного заказа для начала!");
+            Debug.LogWarning("[OrderManager] Нет активного заказа для начала!");
             return false;
         }
 
         if (_orderStarted)
         {
-            Debug.LogWarning($"[OrderManager] StartOrder() - Заказ {_currentOrder.id} уже начат!");
             return false;
         }
 
         _orderStarted = true;
-        Debug.Log($"[OrderManager] ✅ Заказ {_currentOrder.id} НАЧАТ! Теперь можно взять коробку.");
+        Debug.Log($"[OrderManager] ✅ Заказ #{_currentOrder.id} начат");
 
         // Вызываем событие изменения состояния
         OnOrderStateChanged?.Invoke();
@@ -252,19 +238,17 @@ public class OrderManager : MonoBehaviour
     {
         if (!HasActiveOrder)
         {
-            Debug.LogWarning("[OrderManager] CanPickupBox() - Нет активного заказа!");
             return false;
         }
 
         if (_currentOrder.box != box)
         {
-            Debug.LogWarning("[OrderManager] CanPickupBox() - Эта коробка не относится к текущему заказу!");
             return false;
         }
 
         if (!_orderStarted)
         {
-            Debug.LogWarning("[OrderManager] CanPickupBox() - Заказ не начат! Нажмите 'Начать заказ' сначала.");
+            Debug.LogWarning("[OrderManager] Заказ не начат! Нажмите 'Начать заказ' сначала.");
             return false;
         }
 
@@ -273,46 +257,42 @@ public class OrderManager : MonoBehaviour
 
     public bool TryComplete(Box box, DropoffPoint atDropoff)
     {
-        Debug.Log($"[OrderManager] TryComplete() - Коробка {box.name} попала в Dropoff {atDropoff.name}");
-
         if (!HasActiveOrder)
         {
-            Debug.LogWarning($"[OrderManager] Нет активного заказа! Коробка {box.name} не может быть доставлена.");
+            Debug.LogWarning($"[OrderManager] Нет активного заказа!");
             return false;
         }
 
         if (!_orderStarted)
         {
-            Debug.LogWarning($"[OrderManager] Заказ {_currentOrder.id} не начат! Нельзя завершить.");
+            Debug.LogWarning($"[OrderManager] Заказ не начат! Нельзя завершить.");
             return false;
         }
 
         if (_currentOrder.box != box)
         {
-            Debug.LogWarning($"[OrderManager] Коробка {box.name} не является частью текущего заказа {_currentOrder.id}!");
+            Debug.LogWarning($"[OrderManager] Коробка не является частью текущего заказа!");
             return false;
         }
 
-        Debug.Log($"[OrderManager] Найден текущий заказ ID: {_currentOrder.id}, целевой dropoff: {_currentOrder.dropoff.name}");
+        // Проверяем, что целевой dropoff не NULL
+        if (_currentOrder.dropoff == null)
+        {
+            Debug.LogError($"[OrderManager] ❌ У заказа #{_currentOrder.id} целевой dropoff равен NULL!");
+            return false;
+        }
 
         if (_currentOrder.dropoff != atDropoff)
         {
-            Debug.LogWarning($"[OrderManager] ❌ НЕПРАВИЛЬНЫЙ DROPOFF! Коробка {box.name} попала в {atDropoff.name} ('{atDropoff.deliveryAddress}'), а нужно в {_currentOrder.dropoff.name} ('{_currentOrder.dropoff.deliveryAddress}')");
+            Debug.LogWarning($"[OrderManager] ❌ Неправильный адрес! Нужно: '{_currentOrder.dropoff.deliveryAddress}'");
             return false;
         }
 
-        Debug.Log($"[OrderManager] ✅ ПРАВИЛЬНЫЙ DROPOFF! Завершаем заказ {_currentOrder.id}");
-
-        Debug.Log($"[OrderManager] Возвращаем коробку {box.name} в домашнюю позицию...");
         box.ReturnHome();
-
-        Debug.Log($"[OrderManager] Очищаем назначение коробки...");
         box.ClearAssignment();
-
-        Debug.Log($"[OrderManager] Выключаем коробку {box.name}...");
         box.gameObject.SetActive(false);
 
-        Debug.Log($"[OrderManager] 🎉 ЗАКАЗ ДОСТАВЛЕН! ID: {_currentOrder.id} | Item: '{box.contentName}' (${box.price}) | From: '{box.pickupAddress}' | To: '{atDropoff.deliveryAddress}'");
+        Debug.Log($"[OrderManager] 🎉 Заказ #{_currentOrder.id} доставлен: '{box.contentName}' → '{atDropoff.deliveryAddress}'");
 
         // Сохраняем заказ для события перед очисткой
         Order completedOrder = _currentOrder;
@@ -320,7 +300,6 @@ public class OrderManager : MonoBehaviour
         // Очищаем текущий заказ и флаг
         _currentOrder = null;
         _orderStarted = false;
-        Debug.Log("[OrderManager] Текущий заказ очищен, флаг orderStarted сброшен, готов к созданию нового");
 
         // Вызываем события
         OnOrderCompleted?.Invoke(completedOrder);
@@ -331,21 +310,50 @@ public class OrderManager : MonoBehaviour
 
     public bool IsLevelUnlocked(int level)
     {
-        bool unlocked = true;
-        Debug.Log($"[OrderManager] IsLevelUnlocked({level}) = {unlocked}");
-        return unlocked;
+        return true;
     }
 
     string NewId()
     {
         _idCounter++;
-        string id = _idCounter.ToString();
-        Debug.Log($"[OrderManager] Сгенерирован новый ID: {id}");
-        return id;
+        return _idCounter.ToString();
+    }
+
+    /// <summary>
+    /// Проверяет, активны ли все родители объекта
+    /// </summary>
+    bool IsParentHierarchyActive(Transform transform)
+    {
+        Transform parent = transform.parent;
+        while (parent != null)
+        {
+            if (!parent.gameObject.activeSelf)
+            {
+                return false;
+            }
+            parent = parent.parent;
+        }
+        return true;
+    }
+
+    /// <summary>
+    /// Возвращает имя первого неактивного родителя в иерархии
+    /// </summary>
+    string GetFirstInactiveParent(Transform transform)
+    {
+        Transform parent = transform.parent;
+        while (parent != null)
+        {
+            if (!parent.gameObject.activeSelf)
+            {
+                return parent.name;
+            }
+            parent = parent.parent;
+        }
+        return "Unknown";
     }
 
     void OnDestroy()
     {
-        Debug.Log("[OrderManager] OnDestroy() - Менеджер заказов уничтожается");
     }
 }
