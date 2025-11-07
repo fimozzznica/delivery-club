@@ -215,7 +215,7 @@ public class OrderManager : MonoBehaviour
             Debug.LogError($"[OrderManager] ❌ Коробка {box.name} не стала активной в иерархии! Проверьте родительские объекты!");
         }
 
-        Debug.Log($"[OrderManager] ✅ Заказ #{_currentOrder.id} создан: '{box.pickupAddress}'({box.contentName} → '{dropoff.deliveryAddress}'");
+        Debug.Log($"[OrderManager] ✅ Заказ #{_currentOrder.id} создан: '{box.pickupAddress}' ({box.contentName}) → '{dropoff.deliveryAddress}'");
 
         // Сбрасываем флаг "начат" для нового заказа
         _orderStarted = false;
