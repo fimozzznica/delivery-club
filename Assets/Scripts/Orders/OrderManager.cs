@@ -40,7 +40,6 @@ public class OrderManager : MonoBehaviour
     public float playerRating = 4.8f;
 
     [Tooltip("Текущий доступный уровень заказов")]
-    [ReadOnly]
     public int currentLevel = 4;
 
     [Serializable]
