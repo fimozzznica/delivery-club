@@ -30,7 +30,18 @@ public class OrderManager : MonoBehaviour
     [Header("Генерация заказов")]
     public bool autoGenerate = true;
     public float spawnInterval = 8f;
-    // Убираем maxActiveOrders, так как максимум один заказ
+
+    [Header("Игрок")]
+    [Tooltip("Баланс игрока")]
+    public float playerBalance = 0f;
+
+    [Tooltip("Рейтинг игрока")]
+    [Range(0f, 5f)]
+    public float playerRating = 4.8f;
+
+    [Tooltip("Текущий доступный уровень заказов")]
+    [ReadOnly]
+    public int currentLevel = 4;
 
     [Serializable]
     public class Order
@@ -41,14 +52,22 @@ public class OrderManager : MonoBehaviour
     }
 
 
-    private Order _currentOrder; // Вместо списка - один текущий заказ
+    private Order _currentOrder;
     private int _idCounter = 0;
-    private bool _orderStarted = false; // Флаг "заказ начат"
+    private bool _orderStarted = false;
 
-    // Публичное свойство для доступа к текущему заказу из UI
+    // Константы для формулы оплаты
+    private const float BASE_DELIVERY_PRICE = 50f;
+    private const float PACKAGE_VALUE_PERCENT = 0.03f; // 3%
+
     public Order CurrentOrder => _currentOrder;
     public bool HasActiveOrder => _currentOrder != null;
     public bool IsOrderStarted => _orderStarted;
+
+    // Свойства для UI
+    public float PlayerBalance => playerBalance;
+    public float PlayerRating => playerRating;
+    public int CurrentLevel => currentLevel;
 
     void Awake()
     {
@@ -196,7 +215,7 @@ public class OrderManager : MonoBehaviour
             Debug.LogError($"[OrderManager] ❌ Коробка {box.name} не стала активной в иерархии! Проверьте родительские объекты!");
         }
 
-        Debug.Log($"[OrderManager] ✅ Заказ #{_currentOrder.id} создан: '{box.contentName}' → '{dropoff.deliveryAddress}'");
+        Debug.Log($"[OrderManager] ✅ Заказ #{_currentOrder.id} создан: '{box.pickupAddress}'({box.contentName} → '{dropoff.deliveryAddress}'");
 
         // Сбрасываем флаг "начат" для нового заказа
         _orderStarted = false;
@@ -204,6 +223,42 @@ public class OrderManager : MonoBehaviour
         // Вызываем события
         OnOrderCreated?.Invoke(_currentOrder);
         OnOrderStateChanged?.Invoke();
+    }
+
+    /// <summary>
+    /// Рассчитать оплату за доставку
+    /// </summary>
+    public float CalculateDeliveryPrice(Box box, DropoffPoint dropoff)
+    {
+        if (box == null || dropoff == null)
+            return BASE_DELIVERY_PRICE;
+
+        // Базовая цена
+        float price = BASE_DELIVERY_PRICE;
+
+        // 3% от стоимости посылки
+        price += box.price * PACKAGE_VALUE_PERCENT;
+
+        // Процент за расстояние (если есть позиции)
+        if (box.transform != null && dropoff.transform != null)
+        {
+            float distance = Vector3.Distance(box.transform.position, dropoff.transform.position);
+            // Добавляем ~1$ за каждые 10 единиц расстояния
+            price += distance * 0.1f;
+        }
+
+        return Mathf.Round(price);
+    }
+
+    /// <summary>
+    /// Получить оплату за текущий заказ
+    /// </summary>
+    public float GetCurrentOrderPrice()
+    {
+        if (!HasActiveOrder)
+            return 0f;
+
+        return CalculateDeliveryPrice(_currentOrder.box, _currentOrder.dropoff);
     }
 
     /// <summary>
@@ -306,6 +361,46 @@ public class OrderManager : MonoBehaviour
         OnOrderStateChanged?.Invoke();
 
         return true;
+    }
+
+    /// <summary>
+    /// Обновить рейтинг после доставки
+    /// </summary>
+    private void UpdateRatingAfterDelivery(bool success)
+    {
+        if (success)
+        {
+            // Плавное повышение рейтинга к 5.0
+            if (playerRating < 5.0f)
+            {
+                playerRating = Mathf.Min(5.0f, playerRating + 0.1f);
+            }
+        }
+        else
+        {
+            // Понижение при неудаче
+            playerRating = Mathf.Max(0f, playerRating - 0.2f);
+        }
+
+        Debug.Log($"[OrderManager] Рейтинг обновлён: {playerRating:F1}");
+        UpdateLevel();
+    }
+
+    /// <summary>
+    /// Обновить доступный уровень на основе рейтинга
+    /// </summary>
+    private void UpdateLevel()
+    {
+        if (playerRating >= 4.8f)
+            currentLevel = 4;
+        else if (playerRating >= 4.4f)
+            currentLevel = 3;
+        else if (playerRating >= 4.0f)
+            currentLevel = 2;
+        else
+            currentLevel = 1;
+
+        Debug.Log($"[OrderManager] Доступный уровень заказов: {currentLevel} (рейтинг: {playerRating:F1})");
     }
 
     public bool IsLevelUnlocked(int level)
