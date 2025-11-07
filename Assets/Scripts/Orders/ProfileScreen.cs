@@ -13,7 +13,6 @@ public class ProfileScreen : MonoBehaviour
     [Header("References")]
     public OrderManager orderManager;
 
-    private float playerRating = 4.8f;
     private int completedOrders = 0;
 
     void Start()
@@ -46,8 +45,11 @@ public class ProfileScreen : MonoBehaviour
 
     void UpdateDisplay()
     {
+        if (orderManager == null)
+            return;
+
         if (ratingText)
-            ratingText.text = $"{playerRating:F1} ★";
+            ratingText.text = $"{orderManager.PlayerRating:F1} ★";
 
         if (completedOrdersText)
             completedOrdersText.text = completedOrders.ToString();
