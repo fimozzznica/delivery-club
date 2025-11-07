@@ -48,6 +48,7 @@ public class OrderManager : MonoBehaviour
         public string id;
         public Box box;
         public DropoffPoint dropoff;
+        public bool parentWasInactive; // Флаг: был ли родитель неактивен до создания заказа
     }
 
 
@@ -170,8 +171,7 @@ public class OrderManager : MonoBehaviour
             b != null &&
             !b.gameObject.activeSelf &&
             !b.IsAssigned &&
-            IsLevelUnlocked(b.level) &&
-            IsParentHierarchyActive(b.transform)
+            IsLevelUnlocked(b.level)
         ).ToList();
 
         if (candidates.Count == 0)
@@ -201,14 +201,27 @@ public class OrderManager : MonoBehaviour
             return;
         }
 
+        // Сохраняем информацию о том, был ли родитель неактивен
+        bool parentWasInactive = box.transform.parent != null && !box.transform.parent.gameObject.activeInHierarchy;
+
         _currentOrder = new Order
         {
             id = NewId(),
             box = box,
-            dropoff = dropoff
+            dropoff = dropoff,
+            parentWasInactive = parentWasInactive
         };
 
         box.Assign(_currentOrder.id, dropoff);
+
+        // Активируем родителя, если он неактивен
+        if (parentWasInactive)
+        {
+            Debug.Log($"[OrderManager] Активируем родителя коробки: {box.transform.parent.name}");
+            box.transform.parent.gameObject.SetActive(true);
+        }
+
+        // Активируем саму коробку
         box.gameObject.SetActive(true);
 
         // Дополнительная проверка на случай, если что-то пошло не так
@@ -349,6 +362,13 @@ public class OrderManager : MonoBehaviour
         box.ClearAssignment();
         box.gameObject.SetActive(false);
 
+        // Деактивируем родителя обратно, если он был неактивен изначально
+        if (_currentOrder.parentWasInactive && box.transform.parent != null)
+        {
+            Debug.Log($"[OrderManager] Деактивируем родителя коробки обратно: {box.transform.parent.name}");
+            box.transform.parent.gameObject.SetActive(false);
+        }
+
         Debug.Log($"[OrderManager] 🎉 Заказ #{_currentOrder.id} доставлен: '{box.contentName}' → '{atDropoff.deliveryAddress}'");
 Debug.Log($"[OrderManager] 🎉 ЗАКАЗ ДОСТАВЛЕН! ID: {_currentOrder.id} | Item: '{box.contentName}' (${box.price}) | From: '{box.pickupAddress}' | To: '{atDropoff.deliveryAddress}'");
 
@@ -377,7 +397,7 @@ OnOrderStateChanged?.Invoke();
 
 return true;
 }
-</text>
+
 
 
 /// <summary>
