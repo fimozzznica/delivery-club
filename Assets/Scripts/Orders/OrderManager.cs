@@ -347,24 +347,43 @@ public class OrderManager : MonoBehaviour
         box.gameObject.SetActive(false);
 
         Debug.Log($"[OrderManager] 🎉 Заказ #{_currentOrder.id} доставлен: '{box.contentName}' → '{atDropoff.deliveryAddress}'");
+Debug.Log($"[OrderManager] 🎉 ЗАКАЗ ДОСТАВЛЕН! ID: {_currentOrder.id} | Item: '{box.contentName}' (${box.price}) | From: '{box.pickupAddress}' | To: '{atDropoff.deliveryAddress}'");
 
-        // Сохраняем заказ для события перед очисткой
-        Order completedOrder = _currentOrder;
+// Сохраняем заказ для события перед очисткой
+Order completedOrder = _currentOrder;
 
-        // Очищаем текущий заказ и флаг
-        _currentOrder = null;
-        _orderStarted = false;
+// Начисляем оплату
+float payment = CalculateDeliveryPrice(box, atDropoff);
+AddBalance(payment);
+Debug.Log($"[OrderManager] Начислено за доставку: ${payment:F0}");
 
-        // Вызываем события
-        OnOrderCompleted?.Invoke(completedOrder);
-        OnOrderStateChanged?.Invoke();
+// Обновляем рейтинг
+UpdateRatingAfterDelivery(true);
 
-        return true;
-    }
+// Очищаем текущий заказ и флаг
+_currentOrder = null;
+_orderStarted = false;
+Debug.Log("[OrderManager] Текущий заказ очищен, флаг orderStarted сброшен, готов к созданию нового");
 
-    /// <summary>
-    /// Обновить рейтинг после доставки
-    /// </summary>
+// Вызываем события
+OnOrderCompleted?.Invoke(completedOrder);
+OnOrderStateChanged?.Invoke();
+
+return true;
+}
+
+/// <summary>
+/// Добавить к балансу игрока
+/// </summary>
+public void AddBalance(float amount)
+{
+playerBalance += amount;
+Debug.Log($"[OrderManager] Баланс пополнен на ${amount:F0}. Новый баланс: ${playerBalance:F0}");
+}
+
+/// <summary>
+/// Обновить рейтинг после доставки
+/// </summary>
     private void UpdateRatingAfterDelivery(bool success)
     {
         if (success)
