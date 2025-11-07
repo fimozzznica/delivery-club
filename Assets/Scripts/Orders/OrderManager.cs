@@ -128,6 +128,9 @@ public class OrderManager : MonoBehaviour
 
     void Start()
     {
+        // Инициализируем уровень на основе текущего рейтинга
+        UpdateLevel();
+
         if (autoGenerate)
         {
             StartCoroutine(GenerateLoop());
@@ -365,12 +368,17 @@ _currentOrder = null;
 _orderStarted = false;
 Debug.Log("[OrderManager] Текущий заказ очищен, флаг orderStarted сброшен, готов к созданию нового");
 
+// Обновляем рейтинг после успешной доставки
+UpdateRatingAfterDelivery(true);
+
 // Вызываем события
 OnOrderCompleted?.Invoke(completedOrder);
 OnOrderStateChanged?.Invoke();
 
 return true;
 }
+</text>
+
 
 /// <summary>
 /// Добавить к балансу игрока
@@ -423,7 +431,23 @@ Debug.Log($"[OrderManager] Баланс пополнен на ${amount:F0}. Но
 
     public bool IsLevelUnlocked(int level)
     {
-        return true;
+        // Уровень 1 всегда доступен
+        if (level <= 1)
+            return true;
+
+        // Уровень 2: рейтинг >= 4.0
+        if (level == 2)
+            return playerRating >= 4.0f;
+
+        // Уровень 3: рейтинг >= 4.4
+        if (level == 3)
+            return playerRating >= 4.4f;
+
+        // Уровень 4: рейтинг >= 4.8
+        if (level == 4)
+            return playerRating >= 4.8f;
+
+        return false;
     }
 
     string NewId()
