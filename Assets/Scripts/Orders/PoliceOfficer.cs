@@ -32,6 +32,8 @@ public class PoliceOfficer : MonoBehaviour
             audioSource.loop = true;
             audioSource.spatialBlend = 1f; // 3D звук
             audioSource.maxDistance = sirenRadius;
+            audioSource.rolloffMode = AudioRolloffMode.Linear;
+            audioSource.minDistance = 0f;
             audioSource.Play();
         }
 
@@ -48,6 +50,20 @@ public class PoliceOfficer : MonoBehaviour
             return;
 
         float distance = Vector3.Distance(transform.position, playerTransform.position);
+
+        // Управление громкостью сирены по расстоянию
+        if (audioSource != null && audioSource.isPlaying)
+        {
+            if (distance >= sirenRadius)
+            {
+                audioSource.volume = 0f; // Тишина за пределами радиуса
+            }
+            else
+            {
+                // Плавное затухание: громко вблизи, тихо на границе
+                audioSource.volume = 1f - (distance / sirenRadius);
+            }
+        }
 
         // Проверяем, нужно ли ловить игрока
         if (gameState.IsInBlackMarketDeal && distance <= sirenRadius)
