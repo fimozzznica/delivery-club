@@ -30,10 +30,7 @@ public class PoliceOfficer : MonoBehaviour
         {
             audioSource.clip = sirenSound;
             audioSource.loop = true;
-            audioSource.spatialBlend = 1f; // 3D звук
-            audioSource.maxDistance = sirenRadius;
-            audioSource.rolloffMode = AudioRolloffMode.Linear;
-            audioSource.minDistance = 0f;
+            audioSource.spatialBlend = 0f; // Отключаем 3D звук Unity, управляем вручную
             audioSource.Play();
         }
 
@@ -60,8 +57,9 @@ public class PoliceOfficer : MonoBehaviour
             }
             else
             {
-                // Плавное затухание: громко вблизи, тихо на границе
-                audioSource.volume = 1f - (distance / sirenRadius);
+                // Плавное затухание от 100% вблизи до 30% на границе
+                float normalizedDistance = distance / sirenRadius; // 0..1
+                audioSource.volume = Mathf.Lerp(1f, 0.3f, normalizedDistance);
             }
         }
 
