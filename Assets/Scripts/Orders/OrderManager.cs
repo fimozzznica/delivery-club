@@ -470,6 +470,17 @@ Debug.Log($"[OrderManager] Баланс пополнен на ${amount:F0}. Но
         return false;
     }
 
+    /// <summary>
+    /// Очистить текущий заказ (для внешнего использования, например, скупщиком)
+    /// </summary>
+    public void ClearCurrentOrder()
+    {
+        _currentOrder = null;
+        _orderStarted = false;
+        OnOrderStateChanged?.Invoke();
+        Debug.Log("[OrderManager] Текущий заказ очищен извне");
+    }
+
     string NewId()
     {
         _idCounter++;
