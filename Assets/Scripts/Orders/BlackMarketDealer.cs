@@ -7,10 +7,14 @@ using TMPro;
 /// </summary>
 public class BlackMarketDealer : MonoBehaviour
 {
-    [Header("UI")]
+    [Header("UI (старый вариант - можно оставить для совместимости)")]
     public GameObject dealerPanel;
     public TextMeshProUGUI priceText;
     public Button sellButton;
+
+    [Header("Dialog UI (новый вариант)")]
+    [Tooltip("Компонент управления диалоговым окном")]
+    public BlackMarketDialogUI dialogUI;
 
     [Header("Settings")]
     [Range(1f, 3f)]
@@ -24,11 +28,15 @@ public class BlackMarketDealer : MonoBehaviour
 
     private Transform playerTransform;
     private bool playerInRange = false;
+    private bool wasPlayerInRange = false;
 
     void Start()
     {
         if (orderManager == null)
             orderManager = FindObjectOfType<OrderManager>();
+
+        if (dialogUI == null)
+            dialogUI = GetComponent<BlackMarketDialogUI>();
 
         if (sellButton != null)
             sellButton.onClick.AddListener(OnSellButtonClick);
@@ -48,25 +56,55 @@ public class BlackMarketDealer : MonoBehaviour
             return;
 
         float distance = Vector3.Distance(transform.position, playerTransform.position);
-        bool inRange = distance <= interactionRadius;
+        playerInRange = distance <= interactionRadius;
 
-        if (inRange != playerInRange)
+        // Обрабатываем вход/выход из зоны
+        if (playerInRange != wasPlayerInRange)
         {
-            playerInRange = inRange;
-
-            if (inRange)
+            if (playerInRange)
             {
-                ShowUI();
+                OnPlayerEnterRange();
             }
             else
             {
-                HideUI();
+                OnPlayerExitRange();
             }
+
+            wasPlayerInRange = playerInRange;
         }
 
+        // Обновляем UI пока игрок в зоне
         if (playerInRange)
         {
             UpdateUI();
+        }
+    }
+
+    /// <summary>
+    /// Вызывается когда игрок входит в зону взаимодействия
+    /// </summary>
+    void OnPlayerEnterRange()
+    {
+        ShowUI();
+
+        // Обновляем диалоговое окно если оно есть
+        if (dialogUI != null)
+        {
+            dialogUI.UpdateDialogState();
+        }
+    }
+
+    /// <summary>
+    /// Вызывается когда игрок выходит из зоны взаимодействия
+    /// </summary>
+    void OnPlayerExitRange()
+    {
+        HideUI();
+
+        // Скрываем диалоговое окно если оно есть
+        if (dialogUI != null)
+        {
+            dialogUI.ForceHide();
         }
     }
 
@@ -98,7 +136,7 @@ public class BlackMarketDealer : MonoBehaviour
         if (sellButton) sellButton.interactable = orderManager.IsOrderStarted;
     }
 
-    float CalculateBlackMarketPrice()
+    public float CalculateBlackMarketPrice()
     {
         if (orderManager == null || !orderManager.HasActiveOrder)
             return 0f;
@@ -109,8 +147,19 @@ public class BlackMarketDealer : MonoBehaviour
 
     void OnSellButtonClick()
     {
+        SellToDealer();
+    }
+
+    /// <summary>
+    /// Публичный метод для продажи товара скупщику (вызывается из диалога или кнопки)
+    /// </summary>
+    public void SellToDealer()
+    {
         if (orderManager == null || !orderManager.HasActiveOrder || !orderManager.IsOrderStarted)
+        {
+            Debug.LogWarning("[BlackMarketDealer] Невозможно продать: нет активного начатого заказа!");
             return;
+        }
 
         float price = CalculateBlackMarketPrice();
 
