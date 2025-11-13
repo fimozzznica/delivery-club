@@ -458,7 +458,7 @@ public class BlackMarketDialogUI : MonoBehaviour
     /// </summary>
     void UpdateSellButtonState()
     {
-        bool isBoxPlaced = dropoffPoint != null && dropoffPoint.isBoxPlaced;
+        bool isBoxPlaced = dropoffPoint != null && dropoffPoint.IsBoxPlaced();
         SetSellButtonEnabled(isBoxPlaced);
 
         if (!isBoxPlaced)
