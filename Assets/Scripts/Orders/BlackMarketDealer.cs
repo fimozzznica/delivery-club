@@ -126,17 +126,11 @@ public class BlackMarketDealer : MonoBehaviour
         var order = orderManager.CurrentOrder;
         float price = CalculateBlackMarketPrice();
 
-        // Начинаем сделку (проверка полицейских)
-        if (gameStateManager != null)
+        // Проверяем, что игра не завершена
+        if (gameStateManager != null && gameStateManager.IsGameOver)
         {
-            gameStateManager.StartBlackMarketDeal();
-
-            // Если игра закончилась (поймали полицейские), прерываем продажу
-            if (gameStateManager.IsGameOver)
-            {
-                Debug.Log("[BlackMarketDealer] Продажа прервана - игрок пойман!");
-                return;
-            }
+            Debug.Log("[BlackMarketDealer] Продажа прервана - игрок пойман!");
+            return;
         }
 
         // Добавляем деньги
@@ -161,13 +155,7 @@ public class BlackMarketDealer : MonoBehaviour
         // Очищаем заказ
         orderManager.ClearCurrentOrder();
 
-        // Завершаем сделку
-        if (gameStateManager != null)
-        {
-            gameStateManager.EndBlackMarketDeal();
-        }
-
-        // Очищаем размещение коробки
+        // Очищаем размещение коробки (это также завершит сделку)
         if (dropoffPoint != null)
         {
             dropoffPoint.ClearBox();

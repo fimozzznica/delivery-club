@@ -87,6 +87,12 @@ public class PoliceOfficer : MonoBehaviour
             }
         }
 
+        // Логирование состояния для отладки
+        if (gameStateManager.IsInBlackMarketDeal)
+        {
+            Debug.Log($"[PoliceOfficer] {name} - Сделка активна! Расстояние до игрока: {distance:F1}м (радиус: {detectionRadius}м)");
+        }
+
         // Проверяем нужно ли начать погоню
         if (gameStateManager.IsInBlackMarketDeal && distance <= detectionRadius)
         {
@@ -100,6 +106,7 @@ public class PoliceOfficer : MonoBehaviour
         else if (isChasing)
         {
             // Останавливаем погоню если сделка завершена или игрок убежал
+            Debug.Log($"[PoliceOfficer] {name} - Условия погони не выполнены. Сделка активна: {gameStateManager.IsInBlackMarketDeal}, Расстояние: {distance:F1}м");
             StopChase();
         }
     }
@@ -107,17 +114,20 @@ public class PoliceOfficer : MonoBehaviour
     void StartChase()
     {
         isChasing = true;
-        Debug.Log($"[PoliceOfficer] {name} начал погоню!");
+        Debug.Log($"[PoliceOfficer] 🚨 {name} НАЧАЛ ПОГОНЮ! Игрок обнаружен в радиусе {detectionRadius}м!");
 
         // Увеличиваем громкость сирены
         if (audioSource != null)
         {
             audioSource.volume = 1f;
+            Debug.Log($"[PoliceOfficer] {name} - Сирена включена на полную громкость");
         }
     }
 
     void ChasePlayer(float distance)
     {
+        Debug.Log($"[PoliceOfficer] {name} - Преследование! Расстояние: {distance:F1}м, дистанция поимки: {catchDistance}м");
+
         // Двигаемся к игроку
         Vector3 direction = (playerTransform.position - transform.position).normalized;
         transform.position += direction * chaseSpeed * Time.deltaTime;
@@ -128,17 +138,22 @@ public class PoliceOfficer : MonoBehaviour
         // Проверяем поимку
         if (distance <= catchDistance)
         {
+            Debug.Log($"[PoliceOfficer] {name} - Игрок в зоне поимки!");
             CatchPlayer();
         }
     }
 
     void CatchPlayer()
     {
-        Debug.Log($"[PoliceOfficer] {name} поймал игрока!");
+        Debug.Log($"[PoliceOfficer] 👮 {name} ПОЙМАЛ ИГРОКА! GAME OVER!");
 
         if (gameStateManager != null)
         {
             gameStateManager.OnPlayerCaughtByPolice(name);
+        }
+        else
+        {
+            Debug.LogError($"[PoliceOfficer] {name} - GameStateManager отсутствует!");
         }
 
         StopChase();
@@ -150,7 +165,7 @@ public class PoliceOfficer : MonoBehaviour
             return;
 
         isChasing = false;
-        Debug.Log($"[PoliceOfficer] {name} прекратил погоню");
+        Debug.Log($"[PoliceOfficer] ✋ {name} прекратил погоню (сделка завершена или игрок сбежал)");
     }
 
 #if UNITY_EDITOR

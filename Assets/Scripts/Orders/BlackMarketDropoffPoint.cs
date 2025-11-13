@@ -14,6 +14,9 @@ public class BlackMarketDropoffPoint : MonoBehaviour
     [Tooltip("Менеджер заказов")]
     public OrderManager orderManager;
 
+    [Tooltip("Менеджер состояния игры")]
+    public GameStateManager gameStateManager;
+
     private Box currentBox = null;
 
     void Awake()
@@ -37,6 +40,9 @@ public class BlackMarketDropoffPoint : MonoBehaviour
 
         if (orderManager == null)
             orderManager = FindObjectOfType<OrderManager>();
+
+        if (gameStateManager == null)
+            gameStateManager = FindObjectOfType<GameStateManager>();
     }
 
     void Reset()
@@ -63,6 +69,20 @@ public class BlackMarketDropoffPoint : MonoBehaviour
         currentBox = box;
         Debug.Log($"[BlackMarketDropoffPoint] ✅ Коробка размещена на столе");
 
+        // НАЧИНАЕМ СДЕЛКУ (проверка полицейских)
+        if (gameStateManager != null)
+        {
+            gameStateManager.StartBlackMarketDeal();
+
+            // Если игра закончилась (поймали полицейские), прерываем
+            if (gameStateManager.IsGameOver)
+            {
+                Debug.Log("[BlackMarketDropoffPoint] Сделка прервана - игрок пойман!");
+                currentBox = null;
+                return;
+            }
+        }
+
         // Активируем кнопку продажи
         if (dialogUI != null)
         {
@@ -79,6 +99,12 @@ public class BlackMarketDropoffPoint : MonoBehaviour
         // Коробка убрана
         currentBox = null;
         Debug.Log($"[BlackMarketDropoffPoint] Коробка убрана со стола");
+
+        // Завершаем сделку если она была начата
+        if (gameStateManager != null && gameStateManager.IsInBlackMarketDeal)
+        {
+            gameStateManager.EndBlackMarketDeal();
+        }
 
         // Деактивируем кнопку продажи
         if (dialogUI != null)
@@ -101,6 +127,12 @@ public class BlackMarketDropoffPoint : MonoBehaviour
     public void ClearBox()
     {
         currentBox = null;
+
+        // Завершаем сделку
+        if (gameStateManager != null && gameStateManager.IsInBlackMarketDeal)
+        {
+            gameStateManager.EndBlackMarketDeal();
+        }
 
         if (dialogUI != null)
         {
