@@ -1,27 +1,25 @@
 using UnityEngine;
 
 /// <summary>
-/// Точка размещения коробки у скупщика (стол, полка и т.д.)
-/// Отслеживает когда коробка размещена на объекте
+/// Точка размещения товара у скупщика на чёрном рынке
+/// Активирует кнопку продажи когда коробка размещена на столе
 /// </summary>
 [RequireComponent(typeof(Collider))]
 public class BlackMarketDropoffPoint : MonoBehaviour
 {
-    [Header("Settings")]
-    [Tooltip("Требуется ли чтобы коробка была из текущего заказа")]
-    public bool requireActiveOrder = true;
-
     [Header("References")]
-    [Tooltip("Ссылка на OrderManager для проверки заказа")]
-    public OrderManager orderManager;
-
-    [Tooltip("Ссылка на диалоговое окно для обновления кнопки")]
+    [Tooltip("Ссылка на UI диалога скупщика")]
     public BlackMarketDialogUI dialogUI;
 
-    // Публичное свойство для проверки размещения
-    public bool IsBoxPlaced { get; private set; }
+    [Tooltip("Ссылка на менеджер заказов")]
+    public OrderManager orderManager;
 
-    private Box placedBox;
+    [Header("Debug")]
+    [Tooltip("Показывать отладочные сообщения")]
+    public bool showDebugMessages = true;
+
+    private Box currentBox = null;
+    private bool isBoxOnTable = false;
 
     void Awake()
     {
@@ -38,13 +36,20 @@ public class BlackMarketDropoffPoint : MonoBehaviour
 
     void Start()
     {
-        if (orderManager == null)
-            orderManager = FindObjectOfType<OrderManager>();
-
+        // Автопоиск компонентов если не назначены
         if (dialogUI == null)
+        {
             dialogUI = GetComponentInParent<BlackMarketDialogUI>();
+            if (dialogUI == null)
+            {
+                dialogUI = FindObjectOfType<BlackMarketDialogUI>();
+            }
+        }
 
-        IsBoxPlaced = false;
+        if (orderManager == null)
+        {
+            orderManager = FindObjectOfType<OrderManager>();
+        }
     }
 
     void Reset()
@@ -58,81 +63,104 @@ public class BlackMarketDropoffPoint : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        // Проверяем что это коробка
+        // Проверяем есть ли Box компонент
         var box = other.GetComponentInParent<Box>();
         if (box == null)
             return;
 
-        // Если требуется активный заказ
-        if (requireActiveOrder)
+        // Проверяем что это коробка из активного заказа
+        if (orderManager == null || !orderManager.HasActiveOrder)
         {
-            if (orderManager == null || !orderManager.HasActiveOrder || !orderManager.IsOrderStarted)
-            {
-                Debug.Log("[BlackMarketDropoffPoint] Нет активного начатого заказа");
-                return;
-            }
-
-            // Проверяем что это коробка из текущего заказа
-            if (orderManager.CurrentOrder.box != box)
-            {
-                Debug.Log("[BlackMarketDropoffPoint] Это не коробка из текущего заказа");
-                return;
-            }
+            if (showDebugMessages)
+                Debug.Log($"[BlackMarketDropoffPoint] Коробка положена, но нет активного заказа");
+            return;
         }
 
-        // Коробка размещена!
-        placedBox = box;
-        IsBoxPlaced = true;
+        if (orderManager.CurrentOrder.box != box)
+        {
+            if (showDebugMessages)
+                Debug.Log($"[BlackMarketDropoffPoint] Это не та коробка (нужна коробка текущего заказа)");
+            return;
+        }
 
-        Debug.Log($"[BlackMarketDropoffPoint] Коробка '{box.contentName}' размещена на столе скупщика!");
+        // Коробка правильная и на столе!
+        currentBox = box;
+        isBoxOnTable = true;
 
-        // Уведомляем диалоговое окно
+        if (showDebugMessages)
+            Debug.Log($"[BlackMarketDropoffPoint] ✅ Коробка '{box.contentName}' размещена на столе скупщика!");
+
+        // Активируем кнопку продажи в UI
         if (dialogUI != null)
         {
-            dialogUI.OnBoxPlacementChanged();
+            dialogUI.SetSellButtonEnabled(true);
         }
     }
 
     void OnTriggerExit(Collider other)
     {
-        // Проверяем что это наша размещённая коробка
         var box = other.GetComponentInParent<Box>();
-        if (box == null || box != placedBox)
+        if (box == null)
             return;
 
-        // Коробка убрана
-        placedBox = null;
-        IsBoxPlaced = false;
-
-        Debug.Log($"[BlackMarketDropoffPoint] Коробка '{box.contentName}' убрана со стола скупщика");
-
-        // Уведомляем диалоговое окно
-        if (dialogUI != null)
+        // Если убрали коробку со стола
+        if (box == currentBox)
         {
-            dialogUI.OnBoxPlacementChanged();
+            currentBox = null;
+            isBoxOnTable = false;
+
+            if (showDebugMessages)
+                Debug.Log($"[BlackMarketDropoffPoint] Коробка убрана со стола");
+
+            // Деактивируем кнопку продажи
+            if (dialogUI != null)
+            {
+                dialogUI.SetSellButtonEnabled(false);
+            }
         }
     }
 
     /// <summary>
-    /// Очистить размещение (вызывается при продаже)
+    /// Проверить, лежит ли коробка на столе
     /// </summary>
-    public void ClearPlacement()
+    public bool IsBoxOnTable()
     {
-        placedBox = null;
-        IsBoxPlaced = false;
+        return isBoxOnTable && currentBox != null;
+    }
 
-        Debug.Log("[BlackMarketDropoffPoint] Размещение очищено");
+    /// <summary>
+    /// Получить коробку, которая лежит на столе
+    /// </summary>
+    public Box GetBoxOnTable()
+    {
+        return currentBox;
+    }
 
-        // Уведомляем диалоговое окно
+    /// <summary>
+    /// Очистить ссылку на коробку (вызывается после продажи)
+    /// </summary>
+    public void ClearBox()
+    {
+        currentBox = null;
+        isBoxOnTable = false;
+
         if (dialogUI != null)
         {
-            dialogUI.OnBoxPlacementChanged();
+            dialogUI.SetSellButtonEnabled(false);
         }
     }
 
+#if UNITY_EDITOR
     void OnDrawGizmos()
     {
-        Gizmos.color = IsBoxPlaced ? Color.green : Color.yellow;
+        Gizmos.color = isBoxOnTable ? Color.green : Color.yellow;
         Gizmos.DrawWireCube(transform.position, transform.localScale);
     }
+
+    void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawCube(transform.position, transform.localScale);
+    }
+#endif
 }
