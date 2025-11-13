@@ -83,6 +83,9 @@ public class BlackMarketDialogUI : MonoBehaviour
     [Tooltip("Ссылка на OrderManager")]
     public OrderManager orderManager;
 
+    [Tooltip("Ссылка на GameStateManager")]
+    public GameStateManager gameStateManager;
+
     // Состояния диалога
     private enum DialogState
     {
@@ -104,6 +107,9 @@ public class BlackMarketDialogUI : MonoBehaviour
 
         if (orderManager == null)
             orderManager = FindObjectOfType<OrderManager>();
+
+        if (gameStateManager == null)
+            gameStateManager = FindObjectOfType<GameStateManager>();
 
         // Подписываемся на кнопки
         if (itemNameButton != null)
@@ -359,8 +365,22 @@ public class BlackMarketDialogUI : MonoBehaviour
     /// </summary>
     void OnItemNameButtonClick()
     {
+        // НАЧИНАЕМ СДЕЛКУ когда игрок показывает товар
+        if (gameStateManager != null)
+        {
+            gameStateManager.StartBlackMarketDeal();
+
+            // Если игра закончилась (поймали полицейские), прерываем
+            if (gameStateManager.IsGameOver)
+            {
+                Debug.Log("[BlackMarketDialogUI] Показ товара прерван - игрок пойман!");
+                HideDialog();
+                return;
+            }
+        }
+
         ShowOffer();
-        Debug.Log("[BlackMarketDialogUI] Игрок показал товар скупщику");
+        Debug.Log("[BlackMarketDialogUI] Игрок показал товар скупщику - сделка началась!");
     }
 
     /// <summary>
@@ -388,6 +408,13 @@ public class BlackMarketDialogUI : MonoBehaviour
     /// </summary>
     void OnDeclineButtonClick()
     {
+        // Завершаем сделку при отказе
+        if (gameStateManager != null && gameStateManager.IsInBlackMarketDeal)
+        {
+            gameStateManager.EndBlackMarketDeal();
+            Debug.Log("[BlackMarketDialogUI] Сделка завершена - игрок отказался");
+        }
+
         ShowFarewell();
         Debug.Log("[BlackMarketDialogUI] Игрок отказался от продажи");
     }

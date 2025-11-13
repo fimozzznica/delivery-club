@@ -70,18 +70,7 @@ public class BlackMarketDropoffPoint : MonoBehaviour
         Debug.Log($"[BlackMarketDropoffPoint] ✅ Коробка размещена на столе");
 
         // НАЧИНАЕМ СДЕЛКУ (проверка полицейских)
-        if (gameStateManager != null)
-        {
-            gameStateManager.StartBlackMarketDeal();
 
-            // Если игра закончилась (поймали полицейские), прерываем
-            if (gameStateManager.IsGameOver)
-            {
-                Debug.Log("[BlackMarketDropoffPoint] Сделка прервана - игрок пойман!");
-                currentBox = null;
-                return;
-            }
-        }
 
         // Активируем кнопку продажи
         if (dialogUI != null)
