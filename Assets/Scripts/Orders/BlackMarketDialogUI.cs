@@ -83,9 +83,6 @@ public class BlackMarketDialogUI : MonoBehaviour
     [Tooltip("Ссылка на OrderManager")]
     public OrderManager orderManager;
 
-    [Tooltip("Ссылка на BlackMarketDropoffPoint для проверки размещения коробки")]
-    public BlackMarketDropoffPoint dropoffPoint;
-
     // Состояния диалога
     private enum DialogState
     {
@@ -97,7 +94,6 @@ public class BlackMarketDialogUI : MonoBehaviour
     }
 
     private DialogState currentState = DialogState.Hidden;
-    private bool isShowingFarewell = false;
     private Coroutine farewellCoroutine;
 
     void Start()
@@ -108,9 +104,6 @@ public class BlackMarketDialogUI : MonoBehaviour
 
         if (orderManager == null)
             orderManager = FindObjectOfType<OrderManager>();
-
-        if (dropoffPoint == null)
-            dropoffPoint = GetComponentInChildren<BlackMarketDropoffPoint>();
 
         // Подписываемся на кнопки
         if (itemNameButton != null)
@@ -163,7 +156,7 @@ public class BlackMarketDialogUI : MonoBehaviour
     public void UpdateDialogState()
     {
         // Если показываем прощание, не обновляем
-        if (isShowingFarewell)
+        if (currentState == DialogState.Farewell)
             return;
 
         // Проверяем есть ли активный НАЧАТЫЙ заказ
@@ -220,8 +213,6 @@ public class BlackMarketDialogUI : MonoBehaviour
                 itemNameButtonText.text = "Товар";
             }
         }
-
-        isShowingFarewell = false;
     }
 
     /// <summary>
@@ -246,8 +237,8 @@ public class BlackMarketDialogUI : MonoBehaviour
         // Обновляем текст с ценой
         UpdateOfferText();
 
-        // Проверяем размещение коробки и активируем кнопку "Продать"
-        UpdateSellButtonState();
+        // Кнопка "Продать" изначально неактивна (активируется когда коробка на столе)
+        SetSellButtonEnabled(false);
     }
 
     /// <summary>
@@ -287,8 +278,7 @@ public class BlackMarketDialogUI : MonoBehaviour
         // Получаем цену от дилера если возможно
         if (dealer != null && orderManager != null && orderManager.HasActiveOrder)
         {
-            float normalPrice = orderManager.GetCurrentOrderPrice();
-            price = normalPrice * dealer.priceMultiplier;
+            price = dealer.CalculateBlackMarketPrice();
         }
 
         offerText.text = string.Format(offerTemplate, price.ToString("F0"));
@@ -315,8 +305,6 @@ public class BlackMarketDialogUI : MonoBehaviour
 
         if (farewellText != null)
             farewellText.text = farewellMessage;
-
-        isShowingFarewell = true;
 
         // Запускаем таймер скрытия
         if (farewellCoroutine != null)
@@ -346,8 +334,6 @@ public class BlackMarketDialogUI : MonoBehaviour
 
         if (farewellPanel != null)
             farewellPanel.SetActive(false);
-
-        isShowingFarewell = false;
 
         // Останавливаем таймер если был запущен
         if (farewellCoroutine != null)
@@ -444,41 +430,14 @@ public class BlackMarketDialogUI : MonoBehaviour
 
     /// <summary>
     /// Установить активность кнопки "Продать"
+    /// Вызывается из BlackMarketDropoffPoint когда коробка размещена/убрана
     /// </summary>
     public void SetSellButtonEnabled(bool enabled)
     {
         if (sellButton != null)
         {
             sellButton.interactable = enabled;
-        }
-    }
-
-    /// <summary>
-    /// Обновить состояние кнопки "Продать" на основе размещения коробки
-    /// </summary>
-    void UpdateSellButtonState()
-    {
-        bool isBoxPlaced = dropoffPoint != null && dropoffPoint.IsBoxPlaced();
-        SetSellButtonEnabled(isBoxPlaced);
-
-        if (!isBoxPlaced)
-        {
-            Debug.Log("[BlackMarketDialogUI] Коробка не размещена, кнопка 'Продать' неактивна");
-        }
-        else
-        {
-            Debug.Log("[BlackMarketDialogUI] Коробка размещена, кнопка 'Продать' активна");
-        }
-    }
-
-    /// <summary>
-    /// Вызывается извне когда коробка размещена/убрана
-    /// </summary>
-    public void OnBoxPlacementChanged()
-    {
-        if (currentState == DialogState.Offer)
-        {
-            UpdateSellButtonState();
+            Debug.Log($"[BlackMarketDialogUI] Кнопка 'Продать' {(enabled ? "активна" : "неактивна")}");
         }
     }
 }

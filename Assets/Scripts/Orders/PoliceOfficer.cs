@@ -7,81 +7,116 @@ using UnityEngine;
 public class PoliceOfficer : MonoBehaviour
 {
     [Header("Settings")]
-    [Tooltip("Радиус слышимости сирены")]
-    public float sirenRadius = 10f;
+    [Tooltip("Радиус обнаружения сделки")]
+    public float detectionRadius = 10f;
 
     [Tooltip("Скорость погони")]
     public float chaseSpeed = 5f;
 
+    [Tooltip("Дистанция поимки игрока")]
+    public float catchDistance = 1f;
+
     [Header("Audio")]
-    [Tooltip("Звук сирены (mp3)")]
+    [Tooltip("Звук сирены")]
     public AudioClip sirenSound;
 
+    [Header("References")]
+    [Tooltip("Менеджер состояния игры")]
+    public GameStateManager gameStateManager;
+
+    [Tooltip("Transform игрока")]
+    public Transform playerTransform;
+
     private AudioSource audioSource;
-    private Transform playerTransform;
-    private GameStateManager gameState;
     private bool isChasing = false;
 
     void Start()
     {
+        // Настройка аудио
         audioSource = GetComponent<AudioSource>();
-
-        if (sirenSound != null)
+        if (sirenSound != null && audioSource != null)
         {
             audioSource.clip = sirenSound;
             audioSource.loop = true;
-            audioSource.spatialBlend = 0f; // Отключаем 3D звук Unity, управляем вручную
+            audioSource.playOnAwake = false;
+            audioSource.spatialBlend = 1f; // 3D звук
+            audioSource.maxDistance = detectionRadius;
+            audioSource.rolloffMode = AudioRolloffMode.Linear;
+            audioSource.minDistance = 0f;
             audioSource.Play();
         }
 
-        var player = GameObject.FindGameObjectWithTag("Player");
-        if (player != null)
-            playerTransform = player.transform;
+        // Автопоиск компонентов
+        if (gameStateManager == null)
+            gameStateManager = FindObjectOfType<GameStateManager>();
 
-        gameState = FindObjectOfType<GameStateManager>();
+        if (playerTransform == null)
+        {
+            var player = GameObject.FindGameObjectWithTag("Player");
+            if (player != null)
+                playerTransform = player.transform;
+        }
     }
 
     void Update()
     {
-        if (playerTransform == null || gameState == null)
+        if (playerTransform == null || gameStateManager == null)
             return;
+
+        // Если игра окончена, останавливаем погоню
+        if (gameStateManager.IsGameOver)
+        {
+            StopChase();
+            return;
+        }
 
         float distance = Vector3.Distance(transform.position, playerTransform.position);
 
-        // Управление громкостью сирены по расстоянию
+        // Управление громкостью сирены по расстоянию (для 3D звука это дополнительный контроль)
         if (audioSource != null && audioSource.isPlaying)
         {
-            if (distance >= sirenRadius)
+            if (distance >= detectionRadius)
             {
-                audioSource.volume = 0f; // Тишина за пределами радиуса
+                audioSource.volume = 0f;
             }
             else
             {
-                // Плавное затухание от 100% вблизи до 30% на границе
-                float normalizedDistance = distance / sirenRadius; // 0..1
+                // Громче когда ближе
+                float normalizedDistance = distance / detectionRadius;
                 audioSource.volume = Mathf.Lerp(1f, 0.3f, normalizedDistance);
             }
         }
 
-        // Проверяем, нужно ли ловить игрока
-        if (gameState.IsInBlackMarketDeal && distance <= sirenRadius)
+        // Проверяем нужно ли начать погоню
+        if (gameStateManager.IsInBlackMarketDeal && distance <= detectionRadius)
         {
             if (!isChasing)
             {
                 StartChase();
             }
 
-            ChasePlayer();
+            ChasePlayer(distance);
+        }
+        else if (isChasing)
+        {
+            // Останавливаем погоню если сделка завершена или игрок убежал
+            StopChase();
         }
     }
 
     void StartChase()
     {
         isChasing = true;
-        Debug.Log("[PoliceOfficer] Начинаю погоню!");
+        Debug.Log($"[PoliceOfficer] {name} начал погоню!");
+
+        // Увеличиваем громкость сирены
+        if (audioSource != null)
+        {
+            audioSource.volume = 1f;
+        }
     }
 
-    void ChasePlayer()
+    void ChasePlayer(float distance)
     {
         // Двигаемся к игроку
         Vector3 direction = (playerTransform.position - transform.position).normalized;
@@ -90,9 +125,8 @@ public class PoliceOfficer : MonoBehaviour
         // Смотрим на игрока
         transform.LookAt(playerTransform);
 
-        // Проверяем достижение игрока
-        float distance = Vector3.Distance(transform.position, playerTransform.position);
-        if (distance <= 1f)
+        // Проверяем поимку
+        if (distance <= catchDistance)
         {
             CatchPlayer();
         }
@@ -100,19 +134,33 @@ public class PoliceOfficer : MonoBehaviour
 
     void CatchPlayer()
     {
-        Debug.Log($"[PoliceOfficer] Игрок пойман! {name}");
+        Debug.Log($"[PoliceOfficer] {name} поймал игрока!");
 
-        if (gameState != null)
+        if (gameStateManager != null)
         {
-            gameState.OnPlayerCaughtByPolice(name);
+            gameStateManager.OnPlayerCaughtByPolice(name);
         }
 
-        isChasing = false;
+        StopChase();
     }
 
+    void StopChase()
+    {
+        if (!isChasing)
+            return;
+
+        isChasing = false;
+        Debug.Log($"[PoliceOfficer] {name} прекратил погоню");
+    }
+
+#if UNITY_EDITOR
     void OnDrawGizmosSelected()
     {
-        Gizmos.color = Color.blue;
-        Gizmos.DrawWireSphere(transform.position, sirenRadius);
+        Gizmos.color = isChasing ? Color.red : Color.blue;
+        Gizmos.DrawWireSphere(transform.position, detectionRadius);
+
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(transform.position, catchDistance);
     }
+#endif
 }

@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.XR.Interaction.Toolkit;
 
 /// <summary>
 /// Управляет состоянием игры и проверяет полицейских при сделках на чёрном рынке
@@ -15,20 +14,19 @@ public class GameStateManager : MonoBehaviour
     public float policeDetectionRadius = 15f;
 
     [Header("References")]
-    [Tooltip("Экран Game Over (можно оставить пустым, будет использоваться UI Manager)")]
+    [Tooltip("Экран Game Over (опционально)")]
     public GameObject gameOverScreen;
 
-    [Tooltip("Ссылка на OrderScreenUI для отображения Game Over")]
+    [Tooltip("UI экран заказов для отображения Game Over")]
     public OrderScreenUI orderScreenUI;
 
-    [Header("Player Movement")]
-    [Tooltip("XR Origin для блокировки передвижения (обычно XR Origin)")]
-    public GameObject xrOrigin;
+    [Tooltip("Transform игрока (обычно Main Camera или XR Origin)")]
+    public Transform playerTransform;
 
-    [Tooltip("Компонент движения для отключения (например, Continuous Move Provider)")]
+    [Header("Player Movement (VR)")]
+    [Tooltip("Компонент движения игрока для блокировки при поимке")]
     public MonoBehaviour movementProvider;
 
-    private Transform playerTransform;
     private List<PoliceOfficer> allPolice = new List<PoliceOfficer>();
     private bool movementDisabled = false;
 
@@ -40,37 +38,12 @@ public class GameStateManager : MonoBehaviour
         if (gameOverScreen != null)
             gameOverScreen.SetActive(false);
 
-        // Находим игрока
-        var player = GameObject.FindGameObjectWithTag("Player");
-        if (player != null)
-            playerTransform = player.transform;
-
-        // Находим XR Origin если не назначен
-        if (xrOrigin == null)
+        // Автопоиск компонентов
+        if (playerTransform == null)
         {
-            xrOrigin = GameObject.Find("XR Origin");
-            if (xrOrigin == null)
-                xrOrigin = GameObject.Find("XR Origin (XR Rig)");
-        }
-
-        // Находим movement provider автоматически
-        if (movementProvider == null && xrOrigin != null)
-        {
-            movementProvider = xrOrigin.GetComponentInChildren<UnityEngine.XR.Interaction.Toolkit.Locomotion.Movement.ContinuousMoveProvider>();
-
-            if (movementProvider == null)
-            {
-                // Пробуем найти другие типы движения
-                var allMovement = xrOrigin.GetComponentsInChildren<MonoBehaviour>();
-                foreach (var comp in allMovement)
-                {
-                    if (comp.GetType().Name.Contains("Move") || comp.GetType().Name.Contains("Locomotion"))
-                    {
-                        movementProvider = comp;
-                        break;
-                    }
-                }
-            }
+            var player = GameObject.FindGameObjectWithTag("Player");
+            if (player != null)
+                playerTransform = player.transform;
         }
 
         if (orderScreenUI == null)
@@ -127,9 +100,8 @@ public class GameStateManager : MonoBehaviour
 
             if (distance <= policeDetectionRadius)
             {
-                Debug.Log($"[GameStateManager] ⚠️ Полицейский {police.name} обнаружен на расстоянии {distance:F1}м! Начинается погоня!");
+                Debug.Log($"[GameStateManager] ⚠️ Полицейский '{police.name}' обнаружен на расстоянии {distance:F1}м!");
                 policeNearby = true;
-                // НЕ break - проверяем всех полицейских
             }
         }
 
@@ -137,21 +109,20 @@ public class GameStateManager : MonoBehaviour
         {
             Debug.Log("[GameStateManager] ✅ Полицейских поблизости нет, сделка безопасна");
         }
-        // Если полицейские рядом, они сами начнут погоню через свой Update()
-        // и вызовут GameOver() когда догонят игрока
+        // Если полицейские рядом, они начнут погоню и вызовут OnPlayerCaughtByPolice()
     }
 
     /// <summary>
-    /// Вызывается полицейским когда он ловит игрока (из PoliceOfficer.cs)
+    /// Вызывается полицейским когда он ловит игрока
     /// </summary>
     public void OnPlayerCaughtByPolice(string officerName)
     {
+        if (IsGameOver)
+            return;
+
         Debug.Log($"[GameStateManager] Игрок пойман полицейским '{officerName}'!");
 
-        // Блокируем передвижение игрока
         DisablePlayerMovement();
-
-        // Запускаем Game Over
         GameOver("Вас поймали полицейские!");
     }
 
@@ -168,7 +139,7 @@ public class GameStateManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Отключить передвижение игрока (оставить только вращение камеры)
+    /// Отключить передвижение игрока (оставить вращение камеры)
     /// </summary>
     void DisablePlayerMovement()
     {
@@ -178,19 +149,7 @@ public class GameStateManager : MonoBehaviour
         if (movementProvider != null)
         {
             movementProvider.enabled = false;
-            Debug.Log($"[GameStateManager] Передвижение отключено: {movementProvider.GetType().Name}");
-        }
-
-        // Дополнительно можем заблокировать Rigidbody если есть
-        if (xrOrigin != null)
-        {
-            var rb = xrOrigin.GetComponent<Rigidbody>();
-            if (rb != null)
-            {
-                rb.linearVelocity = Vector3.zero;
-                rb.isKinematic = true;
-                Debug.Log("[GameStateManager] Rigidbody игрока заморожен");
-            }
+            Debug.Log($"[GameStateManager] Передвижение отключено");
         }
 
         movementDisabled = true;
@@ -207,16 +166,7 @@ public class GameStateManager : MonoBehaviour
         if (movementProvider != null)
         {
             movementProvider.enabled = true;
-            Debug.Log($"[GameStateManager] Передвижение включено: {movementProvider.GetType().Name}");
-        }
-
-        if (xrOrigin != null)
-        {
-            var rb = xrOrigin.GetComponent<Rigidbody>();
-            if (rb != null)
-            {
-                rb.isKinematic = false;
-            }
+            Debug.Log($"[GameStateManager] Передвижение включено");
         }
 
         movementDisabled = false;
@@ -235,7 +185,6 @@ public class GameStateManager : MonoBehaviour
 
         Debug.Log($"[GameStateManager] GAME OVER! Причина: {reason}");
 
-        // Отключаем передвижение
         DisablePlayerMovement();
 
         // Показываем Game Over на экране заказов
@@ -268,6 +217,7 @@ public class GameStateManager : MonoBehaviour
         EnablePlayerMovement();
     }
 
+#if UNITY_EDITOR
     void OnDrawGizmosSelected()
     {
         if (playerTransform != null)
@@ -276,4 +226,5 @@ public class GameStateManager : MonoBehaviour
             Gizmos.DrawWireSphere(playerTransform.position, policeDetectionRadius);
         }
     }
+#endif
 }

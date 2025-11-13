@@ -1,42 +1,43 @@
 using UnityEngine;
-using UnityEngine.UI;
-using TMPro;
 
 /// <summary>
 /// Скупщик краденых заказов
+/// Управляет зоной взаимодействия и логикой продажи
 /// </summary>
 public class BlackMarketDealer : MonoBehaviour
 {
-    [Header("UI (старый вариант - можно оставить для совместимости)")]
-    public GameObject dealerPanel;
-    public TextMeshProUGUI priceText;
-    public Button sellButton;
-
-    [Header("Dialog UI (новый вариант)")]
-    [Tooltip("Компонент управления диалоговым окном")]
-    public BlackMarketDialogUI dialogUI;
-
-    [Tooltip("Точка размещения коробки для активации кнопки")]
-    public BlackMarketDropoffPoint dropoffPoint;
-
     [Header("Settings")]
     [Range(1f, 3f)]
-    public float priceMultiplier = 1.5f; // На сколько больше платит (+50% по умолчанию)
+    [Tooltip("Множитель цены (скупщик платит больше чем обычная доставка)")]
+    public float priceMultiplier = 1.5f;
 
-    [Tooltip("Радиус взаимодействия")]
+    [Tooltip("Радиус взаимодействия с игроком")]
     public float interactionRadius = 5f;
 
     [Header("References")]
+    [Tooltip("Менеджер заказов")]
     public OrderManager orderManager;
+
+    [Tooltip("UI диалога скупщика")]
+    public BlackMarketDialogUI dialogUI;
+
+    [Tooltip("Точка размещения товара")]
+    public BlackMarketDropoffPoint dropoffPoint;
+
+    [Tooltip("Менеджер состояния игры")]
+    public GameStateManager gameStateManager;
 
     private Transform playerTransform;
     private bool playerInRange = false;
-    private bool wasPlayerInRange = false;
 
     void Start()
     {
+        // Автопоиск компонентов
         if (orderManager == null)
             orderManager = FindObjectOfType<OrderManager>();
+
+        if (gameStateManager == null)
+            gameStateManager = FindObjectOfType<GameStateManager>();
 
         if (dialogUI == null)
             dialogUI = GetComponent<BlackMarketDialogUI>();
@@ -44,13 +45,7 @@ public class BlackMarketDealer : MonoBehaviour
         if (dropoffPoint == null)
             dropoffPoint = GetComponentInChildren<BlackMarketDropoffPoint>();
 
-        if (sellButton != null)
-            sellButton.onClick.AddListener(OnSellButtonClick);
-
-        if (dealerPanel != null)
-            dealerPanel.SetActive(false);
-
-        // Находим игрока по тегу
+        // Находим игрока
         var player = GameObject.FindGameObjectWithTag("Player");
         if (player != null)
             playerTransform = player.transform;
@@ -61,12 +56,15 @@ public class BlackMarketDealer : MonoBehaviour
         if (playerTransform == null)
             return;
 
+        // Проверяем расстояние до игрока
         float distance = Vector3.Distance(transform.position, playerTransform.position);
-        playerInRange = distance <= interactionRadius;
+        bool inRange = distance <= interactionRadius;
 
         // Обрабатываем вход/выход из зоны
-        if (playerInRange != wasPlayerInRange)
+        if (inRange != playerInRange)
         {
+            playerInRange = inRange;
+
             if (playerInRange)
             {
                 OnPlayerEnterRange();
@@ -75,73 +73,28 @@ public class BlackMarketDealer : MonoBehaviour
             {
                 OnPlayerExitRange();
             }
-
-            wasPlayerInRange = playerInRange;
-        }
-
-        // Обновляем UI пока игрок в зоне
-        if (playerInRange)
-        {
-            UpdateUI();
         }
     }
 
-    /// <summary>
-    /// Вызывается когда игрок входит в зону взаимодействия
-    /// </summary>
     void OnPlayerEnterRange()
     {
-        ShowUI();
-
-        // Обновляем диалоговое окно если оно есть
         if (dialogUI != null)
         {
             dialogUI.UpdateDialogState();
         }
     }
 
-    /// <summary>
-    /// Вызывается когда игрок выходит из зоны взаимодействия
-    /// </summary>
     void OnPlayerExitRange()
     {
-        HideUI();
-
-        // Скрываем диалоговое окно если оно есть
         if (dialogUI != null)
         {
             dialogUI.ForceHide();
         }
     }
 
-    void ShowUI()
-    {
-        if (dealerPanel != null)
-            dealerPanel.SetActive(true);
-
-        UpdateUI();
-    }
-
-    void HideUI()
-    {
-        if (dealerPanel != null)
-            dealerPanel.SetActive(false);
-    }
-
-    void UpdateUI()
-    {
-        if (orderManager == null || !orderManager.HasActiveOrder)
-        {
-            if (priceText) priceText.text = "Нет товара";
-            if (sellButton) sellButton.interactable = false;
-            return;
-        }
-
-        float price = CalculateBlackMarketPrice();
-        if (priceText) priceText.text = $"Куплю за: ${price:F0}";
-        if (sellButton) sellButton.interactable = orderManager.IsOrderStarted;
-    }
-
+    /// <summary>
+    /// Рассчитать цену на чёрном рынке
+    /// </summary>
     public float CalculateBlackMarketPrice()
     {
         if (orderManager == null || !orderManager.HasActiveOrder)
@@ -151,40 +104,49 @@ public class BlackMarketDealer : MonoBehaviour
         return normalPrice * priceMultiplier;
     }
 
-    void OnSellButtonClick()
-    {
-        SellToDealer();
-    }
-
     /// <summary>
-    /// Публичный метод для продажи товара скупщику (вызывается из диалога или кнопки)
+    /// Продать товар скупщику (вызывается из UI)
     /// </summary>
     public void SellToDealer()
     {
+        // Проверки
         if (orderManager == null || !orderManager.HasActiveOrder || !orderManager.IsOrderStarted)
         {
             Debug.LogWarning("[BlackMarketDealer] Невозможно продать: нет активного начатого заказа!");
             return;
         }
 
-        float price = CalculateBlackMarketPrice();
-
-        // Добавляем деньги
-        orderManager.playerBalance += price;
-
-        // Сильно понижаем рейтинг
-        orderManager.playerRating = Mathf.Max(0f, orderManager.playerRating - 0.5f);
-
-        // Переводим игрока в состояние "продажа скупщику"
-        var gameState = FindObjectOfType<GameStateManager>();
-        if (gameState != null)
+        if (dropoffPoint != null && !dropoffPoint.IsBoxPlaced())
         {
-            gameState.StartBlackMarketDeal();
+            Debug.LogWarning("[BlackMarketDealer] Коробка не размещена на столе!");
+            return;
         }
 
-        // Завершаем заказ
+        // Получаем данные заказа
         var order = orderManager.CurrentOrder;
-        if (order != null && order.box != null)
+        float price = CalculateBlackMarketPrice();
+
+        // Начинаем сделку (проверка полицейских)
+        if (gameStateManager != null)
+        {
+            gameStateManager.StartBlackMarketDeal();
+
+            // Если игра закончилась (поймали полицейские), прерываем продажу
+            if (gameStateManager.IsGameOver)
+            {
+                Debug.Log("[BlackMarketDealer] Продажа прервана - игрок пойман!");
+                return;
+            }
+        }
+
+        // Добавляем деньги
+        orderManager.AddBalance(price);
+
+        // Понижаем рейтинг
+        orderManager.playerRating = Mathf.Max(0f, orderManager.playerRating - 0.5f);
+
+        // Убираем коробку
+        if (order.box != null)
         {
             order.box.ReturnHome();
             order.box.ClearAssignment();
@@ -199,32 +161,40 @@ public class BlackMarketDealer : MonoBehaviour
         // Очищаем заказ
         orderManager.ClearCurrentOrder();
 
-        // Завершаем состояние сделки
-        if (gameState != null)
+        // Завершаем сделку
+        if (gameStateManager != null)
         {
-            gameState.EndBlackMarketDeal();
+            gameStateManager.EndBlackMarketDeal();
         }
 
         // Очищаем размещение коробки
         if (dropoffPoint != null)
         {
-            dropoffPoint.ClearPlacement();
+            dropoffPoint.ClearBox();
         }
 
-        Debug.Log($"[BlackMarketDealer] Товар продан за ${price:F0}! Рейтинг упал до {orderManager.playerRating:F1}");
+        Debug.Log($"[BlackMarketDealer] ✅ Товар продан за ${price:F0}! Рейтинг упал до {orderManager.playerRating:F1}");
 
-        HideUI();
+        // Скрываем диалог
+        if (dialogUI != null)
+        {
+            dialogUI.ForceHide();
+        }
     }
 
-    void OnDestroy()
+    /// <summary>
+    /// Проверить находится ли игрок в зоне взаимодействия
+    /// </summary>
+    public bool IsPlayerInRange()
     {
-        if (sellButton != null)
-            sellButton.onClick.RemoveListener(OnSellButtonClick);
+        return playerInRange;
     }
 
+#if UNITY_EDITOR
     void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, interactionRadius);
     }
+#endif
 }
