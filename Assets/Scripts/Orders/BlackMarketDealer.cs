@@ -16,6 +16,9 @@ public class BlackMarketDealer : MonoBehaviour
     [Tooltip("Компонент управления диалоговым окном")]
     public BlackMarketDialogUI dialogUI;
 
+    [Tooltip("Точка размещения коробки для активации кнопки")]
+    public BlackMarketDropoffPoint dropoffPoint;
+
     [Header("Settings")]
     [Range(1f, 3f)]
     public float priceMultiplier = 1.5f; // На сколько больше платит (+50% по умолчанию)
@@ -37,6 +40,9 @@ public class BlackMarketDealer : MonoBehaviour
 
         if (dialogUI == null)
             dialogUI = GetComponent<BlackMarketDialogUI>();
+
+        if (dropoffPoint == null)
+            dropoffPoint = GetComponentInChildren<BlackMarketDropoffPoint>();
 
         if (sellButton != null)
             sellButton.onClick.AddListener(OnSellButtonClick);
@@ -197,6 +203,12 @@ public class BlackMarketDealer : MonoBehaviour
         if (gameState != null)
         {
             gameState.EndBlackMarketDeal();
+        }
+
+        // Очищаем размещение коробки
+        if (dropoffPoint != null)
+        {
+            dropoffPoint.ClearPlacement();
         }
 
         Debug.Log($"[BlackMarketDealer] Товар продан за ${price:F0}! Рейтинг упал до {orderManager.playerRating:F1}");

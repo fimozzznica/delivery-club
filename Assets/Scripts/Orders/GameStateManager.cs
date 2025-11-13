@@ -106,7 +106,7 @@ public class GameStateManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Проверить близость полицейских и заблокировать игрока если они рядом
+    /// Проверить близость полицейских (вызывается при начале сделки)
     /// </summary>
     void CheckPoliceProximity()
     {
@@ -116,7 +116,7 @@ public class GameStateManager : MonoBehaviour
             return;
         }
 
-        bool policeCaught = false;
+        bool policeNearby = false;
 
         foreach (var police in allPolice)
         {
@@ -127,24 +127,32 @@ public class GameStateManager : MonoBehaviour
 
             if (distance <= policeDetectionRadius)
             {
-                Debug.Log($"[GameStateManager] ⚠️ Полицейский {police.name} обнаружен на расстоянии {distance:F1}м!");
-                policeCaught = true;
-                break;
+                Debug.Log($"[GameStateManager] ⚠️ Полицейский {police.name} обнаружен на расстоянии {distance:F1}м! Начинается погоня!");
+                policeNearby = true;
+                // НЕ break - проверяем всех полицейских
             }
         }
 
-        if (policeCaught)
-        {
-            // Блокируем передвижение игрока
-            DisablePlayerMovement();
-
-            // Запускаем Game Over
-            GameOver("Вас поймали полицейские!");
-        }
-        else
+        if (!policeNearby)
         {
             Debug.Log("[GameStateManager] ✅ Полицейских поблизости нет, сделка безопасна");
         }
+        // Если полицейские рядом, они сами начнут погоню через свой Update()
+        // и вызовут GameOver() когда догонят игрока
+    }
+
+    /// <summary>
+    /// Вызывается полицейским когда он ловит игрока (из PoliceOfficer.cs)
+    /// </summary>
+    public void OnPlayerCaughtByPolice(string officerName)
+    {
+        Debug.Log($"[GameStateManager] Игрок пойман полицейским '{officerName}'!");
+
+        // Блокируем передвижение игрока
+        DisablePlayerMovement();
+
+        // Запускаем Game Over
+        GameOver("Вас поймали полицейские!");
     }
 
     /// <summary>

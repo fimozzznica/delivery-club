@@ -100,11 +100,11 @@ public class PoliceOfficer : MonoBehaviour
 
     void CatchPlayer()
     {
-        Debug.Log("[PoliceOfficer] Игрок пойман! Game Over!");
+        Debug.Log($"[PoliceOfficer] Игрок пойман! {name}");
 
         if (gameState != null)
         {
-            gameState.GameOver();
+            gameState.OnPlayerCaughtByPolice(name);
         }
 
         isChasing = false;

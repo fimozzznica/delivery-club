@@ -83,6 +83,9 @@ public class BlackMarketDialogUI : MonoBehaviour
     [Tooltip("Ссылка на OrderManager")]
     public OrderManager orderManager;
 
+    [Tooltip("Ссылка на BlackMarketDropoffPoint для проверки размещения коробки")]
+    public BlackMarketDropoffPoint dropoffPoint;
+
     // Состояния диалога
     private enum DialogState
     {
@@ -105,6 +108,9 @@ public class BlackMarketDialogUI : MonoBehaviour
 
         if (orderManager == null)
             orderManager = FindObjectOfType<OrderManager>();
+
+        if (dropoffPoint == null)
+            dropoffPoint = GetComponentInChildren<BlackMarketDropoffPoint>();
 
         // Подписываемся на кнопки
         if (itemNameButton != null)
@@ -239,6 +245,9 @@ public class BlackMarketDialogUI : MonoBehaviour
 
         // Обновляем текст с ценой
         UpdateOfferText();
+
+        // Проверяем размещение коробки и активируем кнопку "Продать"
+        UpdateSellButtonState();
     }
 
     /// <summary>
@@ -441,6 +450,35 @@ public class BlackMarketDialogUI : MonoBehaviour
         if (sellButton != null)
         {
             sellButton.interactable = enabled;
+        }
+    }
+
+    /// <summary>
+    /// Обновить состояние кнопки "Продать" на основе размещения коробки
+    /// </summary>
+    void UpdateSellButtonState()
+    {
+        bool isBoxPlaced = dropoffPoint != null && dropoffPoint.IsBoxPlaced;
+        SetSellButtonEnabled(isBoxPlaced);
+
+        if (!isBoxPlaced)
+        {
+            Debug.Log("[BlackMarketDialogUI] Коробка не размещена, кнопка 'Продать' неактивна");
+        }
+        else
+        {
+            Debug.Log("[BlackMarketDialogUI] Коробка размещена, кнопка 'Продать' активна");
+        }
+    }
+
+    /// <summary>
+    /// Вызывается извне когда коробка размещена/убрана
+    /// </summary>
+    public void OnBoxPlacementChanged()
+    {
+        if (currentState == DialogState.Offer)
+        {
+            UpdateSellButtonState();
         }
     }
 }
