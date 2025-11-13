@@ -432,4 +432,15 @@ public class BlackMarketDialogUI : MonoBehaviour
     {
         HideDialog();
     }
+
+    /// <summary>
+    /// Установить активность кнопки "Продать"
+    /// </summary>
+    public void SetSellButtonEnabled(bool enabled)
+    {
+        if (sellButton != null)
+        {
+            sellButton.interactable = enabled;
+        }
+    }
 }
