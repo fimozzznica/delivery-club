@@ -19,7 +19,7 @@ public class BlackMarketDropoffPoint : MonoBehaviour
     public bool showDebugMessages = true;
 
     private Box currentBox = null;
-    private bool isBoxOnTable = false;
+    private bool isBoxPlaced = false;
 
     void Awake()
     {
@@ -85,7 +85,7 @@ public class BlackMarketDropoffPoint : MonoBehaviour
 
         // Коробка правильная и на столе!
         currentBox = box;
-        isBoxOnTable = true;
+        isBoxPlaced = true;
 
         if (showDebugMessages)
             Debug.Log($"[BlackMarketDropoffPoint] ✅ Коробка '{box.contentName}' размещена на столе скупщика!");
@@ -107,7 +107,7 @@ public class BlackMarketDropoffPoint : MonoBehaviour
         if (box == currentBox)
         {
             currentBox = null;
-            isBoxOnTable = false;
+            isBoxPlaced = false;
 
             if (showDebugMessages)
                 Debug.Log($"[BlackMarketDropoffPoint] Коробка убрана со стола");
@@ -123,15 +123,15 @@ public class BlackMarketDropoffPoint : MonoBehaviour
     /// <summary>
     /// Проверить, лежит ли коробка на столе
     /// </summary>
-    public bool IsBoxOnTable()
+    public bool IsBoxPlaced()
     {
-        return isBoxOnTable && currentBox != null;
+        return isBoxPlaced && currentBox != null;
     }
 
     /// <summary>
     /// Получить коробку, которая лежит на столе
     /// </summary>
-    public Box GetBoxOnTable()
+    public Box GetBoxPlaced()
     {
         return currentBox;
     }
@@ -142,7 +142,7 @@ public class BlackMarketDropoffPoint : MonoBehaviour
     public void ClearBox()
     {
         currentBox = null;
-        isBoxOnTable = false;
+        isBoxPlaced = false;
 
         if (dialogUI != null)
         {
@@ -153,7 +153,7 @@ public class BlackMarketDropoffPoint : MonoBehaviour
 #if UNITY_EDITOR
     void OnDrawGizmos()
     {
-        Gizmos.color = isBoxOnTable ? Color.green : Color.yellow;
+        Gizmos.color = isBoxPlaced ? Color.green : Color.yellow;
         Gizmos.DrawWireCube(transform.position, transform.localScale);
     }
 
