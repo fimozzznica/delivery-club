@@ -10,12 +10,14 @@ public class OrderScreenUI : MonoBehaviour
     [Header("UI Elements")]
     public GameObject orderInfoPanel;
     public GameObject noOrderPanel;
+    public GameObject gameOverPanel;
     public TextMeshProUGUI orderIdText;
     public TextMeshProUGUI pickupText;
     public TextMeshProUGUI deliveryText;
     public TextMeshProUGUI deliveryPriceText;
     public TextMeshProUGUI balanceText;
     public TextMeshProUGUI noOrderText;
+    public TextMeshProUGUI gameOverText;
     public Button actionButton;
     public TextMeshProUGUI actionButtonText;
 
@@ -24,6 +26,7 @@ public class OrderScreenUI : MonoBehaviour
 
     private float playerBalance = 0f;
     private const float DELIVERY_PRICE = 50f;
+    private bool isGameOver = false;
 
     void Start()
     {
@@ -35,6 +38,10 @@ public class OrderScreenUI : MonoBehaviour
 
         if (orderManager != null)
             orderManager.OnOrderStateChanged.AddListener(UpdateDisplay);
+
+        // Скрываем панель Game Over при старте
+        if (gameOverPanel != null)
+            gameOverPanel.SetActive(false);
 
         UpdateDisplay();
     }
@@ -50,6 +57,10 @@ public class OrderScreenUI : MonoBehaviour
 
     void UpdateDisplay()
     {
+        // Если игра окончена, не обновляем интерфейс
+        if (isGameOver)
+            return;
+
         UpdateBalance();
 
         if (orderManager == null || !orderManager.HasActiveOrder)
@@ -106,7 +117,7 @@ public class OrderScreenUI : MonoBehaviour
 
     void OnActionButtonClick()
     {
-        if (orderManager == null || !orderManager.HasActiveOrder)
+        if (orderManager == null || !orderManager.HasActiveOrder || isGameOver)
             return;
 
         if (!orderManager.IsOrderStarted)
@@ -126,5 +137,28 @@ public class OrderScreenUI : MonoBehaviour
                 Debug.Log("Доставьте груз в правильное место!");
             }
         }
+    }
+
+    /// <summary>
+    /// Показать экран Game Over
+    /// </summary>
+    public void ShowGameOver(string reason)
+    {
+        isGameOver = true;
+
+        // Скрываем все остальные панели
+        if (orderInfoPanel) orderInfoPanel.SetActive(false);
+        if (noOrderPanel) noOrderPanel.SetActive(false);
+
+        // Показываем панель Game Over
+        if (gameOverPanel) gameOverPanel.SetActive(true);
+
+        // Устанавливаем текст причины
+        if (gameOverText) gameOverText.text = reason;
+
+        // Отключаем кнопку действия
+        if (actionButton) actionButton.interactable = false;
+
+        Debug.Log($"[OrderScreenUI] Game Over: {reason}");
     }
 }

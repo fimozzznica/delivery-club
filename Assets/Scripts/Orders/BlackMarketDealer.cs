@@ -193,6 +193,12 @@ public class BlackMarketDealer : MonoBehaviour
         // Очищаем заказ
         orderManager.ClearCurrentOrder();
 
+        // Завершаем состояние сделки
+        if (gameState != null)
+        {
+            gameState.EndBlackMarketDeal();
+        }
+
         Debug.Log($"[BlackMarketDealer] Товар продан за ${price:F0}! Рейтинг упал до {orderManager.playerRating:F1}");
 
         HideUI();
