@@ -47,7 +47,7 @@ public class GameStateManager : MonoBehaviour
         }
 
         if (orderScreenUI == null)
-            orderScreenUI = FindObjectOfType<OrderScreenUI>();
+            orderScreenUI = FindAnyObjectByType<OrderScreenUI>();
 
         // Собираем всех полицейских на сцене
         RefreshPoliceList();

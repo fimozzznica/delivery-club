@@ -1,11 +1,25 @@
-using UnityEngine;
+using Bhaptics.SDK2;
 using System;
+using UnityEngine;
 
 public class FullMotionSender : MonoBehaviour
 {
     public Rigidbody vehicleRigidbody;
     private Vector3 lastVelocity;
     private Vector3 lastAngularVelocity;
+
+    [Header("Bhaptics Feedback Settings")]
+    [SerializeField] private bool enableHaptics = true;
+    [SerializeField] private bool debugHaptics = false;
+    [SerializeField] private float accelThreshold = 2.5f;
+    [SerializeField] private float brakeThreshold = -3.5f;
+    [SerializeField] private float lateralThreshold = 2.5f;
+    [SerializeField] private float collisionIntensityScale = 3.6f;
+    [SerializeField] private float vibrationIntensityScale = 0.1f;
+
+    // Для отслеживания предыдущих состояний
+    private float _lastBrakeInput = 0f;
+    private Vector3 _previousAcceleration = Vector3.zero;
 
     void Start()
     {
@@ -35,20 +49,76 @@ public class FullMotionSender : MonoBehaviour
         // === 4. Формируем структуру данных для капсулы ===
         MotionData data = new MotionData(linearAcc, angularVel, angularAcc, position, rotationEuler);
 
-        // === 5. Пример вывода / отправки ===
-        string json = JsonUtility.ToJson(data);
-        Debug.Log(json); // здесь можно отправлять в капсулу
+        // === 5. Обработка тактильной обратной связи ===
+        if (enableHaptics)
+        {
+            HandleHaptics(linearAcc, currentVelocity, angularVel);
+        }
+
+        //// === 6. Пример вывода / отправки ===
+        //string json = JsonUtility.ToJson(data);
+        //Debug.Log(json); // здесь можно отправлять в капсулу
+
+        _previousAcceleration = linearAcc;
     }
 
-    // === 6. Событие столкновения ===
+    private void HandleHaptics(Vector3 linearAcceleration, Vector3 currentVelocity, Vector3 angularVelocity)
+    {
+        // Преобразуем ускорения в локальное пространство транспортного средства
+        Vector3 localAcceleration = transform.InverseTransformDirection(linearAcceleration);
+
+        float forwardAccel = localAcceleration.z;  // Ускорение вперед/назад
+        float lateralAccel = localAcceleration.x;  // Боковое ускорение
+        float verticalAccel = localAcceleration.y; // Вертикальное ускорение
+
+        float forwardSpeed = Vector3.Dot(currentVelocity, transform.forward);
+
+        // --- Давление в спину (ускорение вперед) ---
+        if (forwardAccel > accelThreshold && forwardSpeed > 1f)
+        {
+            float intensity = Mathf.Clamp01(forwardAccel / 10f);
+            BhapticsLibrary.Play("davlenie_kovsha", 0, intensity, 1, 0, 0);
+            if (debugHaptics)
+                Debug.Log($"[HAPTICS] Давление кресла: {intensity:F2}, Accel: {forwardAccel:F2}");
+        }
+
+        // --- Поворот влево ---
+        if (lateralAccel < -lateralThreshold)
+        {
+            float intensity = Mathf.Clamp01(Mathf.Abs(lateralAccel) / 10f);
+            BhapticsLibrary.Play("left_povorot", 0, intensity, 1, 0, 0);
+            if (debugHaptics)
+                Debug.Log($"[HAPTICS] Поворот влево: {intensity:F2}, Accel: {lateralAccel:F2}");
+        }
+
+        // --- Поворот вправо ---
+        if (lateralAccel > lateralThreshold)
+        {
+            float intensity = Mathf.Clamp01(Mathf.Abs(lateralAccel) / 10f);
+            BhapticsLibrary.Play("right_povorot", 0, intensity, 1, 0, 0);
+            if (debugHaptics)
+                Debug.Log($"[HAPTICS] Поворот вправо: {intensity:F2}, Accel: {lateralAccel:F2}");
+        }
+    }
+
+    // === Событие столкновения ===
     void OnCollisionEnter(Collision collision)
     {
+        if (!enableHaptics) return;
+
         // Дополнительное ускорение от удара
         Vector3 impactForce = collision.impulse / Time.fixedDeltaTime;
         Vector3 impactAcc = impactForce / vehicleRigidbody.mass;
 
+        // Эффект столкновения для Bhaptics
+        float intensity = Mathf.Clamp01(impactAcc.magnitude * collisionIntensityScale / 100f);
+        BhapticsLibrary.Play("remen_bezopasnosti", 0, intensity, 1, 0, 0);
+
+        if (debugHaptics)
+            Debug.Log($"[HAPTICS] Столкновение: {intensity:F2}, Force: {impactAcc.magnitude:F2}");
+
         // Можно добавить к последнему ускорению для капсулы
-        lastVelocity += impactAcc * Time.fixedDeltaTime; 
+        lastVelocity += impactAcc * Time.fixedDeltaTime;
     }
 }
 

@@ -9,6 +9,8 @@ TagManager:
   - Chair
   - CloseTrigger
   - OpenTrigger
+  - LeftHand
+  - RightHand
   layers:
   - Default
   - TransparentFX

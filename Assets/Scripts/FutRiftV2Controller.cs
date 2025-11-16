@@ -14,6 +14,7 @@ namespace Futurift
 
         private @NewInputSystem controls;
 
+
         [SerializeField] private float maxPitch = 21f;
         [SerializeField] private float maxRoll = 18f;
         [SerializeField] private float maxYaw = 30f;
@@ -74,7 +75,7 @@ namespace Futurift
 
             //transform.localRotation = Quaternion.Euler(0f, currentYaw, 0f);
 
-            Debug.Log($"Pitch: {currentPitch}, Roll: {currentRoll}, Yaw: {currentYaw}");
+            //Debug.Log($"Pitch: {currentPitch}, Roll: {currentRoll}, Yaw: {currentYaw}");
         }
     }
 }
