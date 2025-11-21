@@ -1,9 +1,5 @@
 using UnityEngine;
 
-/// <summary>
-/// Точка размещения коробки у скупщика (стол, полка и т.д.)
-/// Отслеживает когда коробка размещена и активирует кнопку продажи
-/// </summary>
 [RequireComponent(typeof(Collider))]
 public class BlackMarketDropoffPoint : MonoBehaviour
 {
@@ -24,7 +20,7 @@ public class BlackMarketDropoffPoint : MonoBehaviour
         var collider = GetComponent<Collider>();
         if (collider == null)
         {
-            Debug.LogError($"[BlackMarketDropoffPoint] {name} - НЕТ КОЛЛАЙДЕРА!");
+            Debug.LogError($"[BlackMarketDropoffPoint] {name} - нет коллайдера!");
         }
         else
         {
@@ -64,13 +60,9 @@ public class BlackMarketDropoffPoint : MonoBehaviour
 
         if (orderManager.CurrentOrder.box != box)
             return;
-
-        // Коробка размещена!
+        
         currentBox = box;
-        Debug.Log($"[BlackMarketDropoffPoint] ✅ Коробка размещена на столе");
-
-        // НАЧИНАЕМ СДЕЛКУ (проверка полицейских)
-
+        Debug.Log($"[BlackMarketDropoffPoint] Коробка размещена");
 
         // Активируем кнопку продажи
         if (dialogUI != null)
@@ -84,10 +76,9 @@ public class BlackMarketDropoffPoint : MonoBehaviour
         var box = other.GetComponentInParent<Box>();
         if (box == null || box != currentBox)
             return;
-
-        // Коробка убрана
+        
         currentBox = null;
-        Debug.Log($"[BlackMarketDropoffPoint] Коробка убрана со стола");
+        Debug.Log($"[BlackMarketDropoffPoint] Коробка убрана ");
 
         // Завершаем сделку если она была начата
         if (gameStateManager != null && gameStateManager.IsInBlackMarketDeal)
@@ -101,23 +92,16 @@ public class BlackMarketDropoffPoint : MonoBehaviour
             dialogUI.SetSellButtonEnabled(false);
         }
     }
-
-    /// <summary>
-    /// Проверить, размещена ли коробка
-    /// </summary>
+    
     public bool IsBoxPlaced()
     {
         return currentBox != null;
     }
-
-    /// <summary>
-    /// Очистить ссылку на коробку (после продажи)
-    /// </summary>
+    
     public void ClearBox()
     {
         currentBox = null;
 
-        // Завершаем сделку
         if (gameStateManager != null && gameStateManager.IsInBlackMarketDeal)
         {
             gameStateManager.EndBlackMarketDeal();

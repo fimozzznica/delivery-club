@@ -1,8 +1,6 @@
 using UnityEngine;
 
-/// <summary>
-/// Управляет переключением между экранами заказов и профиля
-/// </summary>
+
 public class UIManager : MonoBehaviour
 {
     [Header("UI Panels")]

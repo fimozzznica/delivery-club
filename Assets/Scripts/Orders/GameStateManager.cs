@@ -1,9 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-/// Управляет состоянием игры и проверяет полицейских при сделках на чёрном рынке
-/// </summary>
+
+
 public class GameStateManager : MonoBehaviour
 {
     public bool IsInBlackMarketDeal { get; private set; }
@@ -37,8 +36,7 @@ public class GameStateManager : MonoBehaviour
 
         if (gameOverScreen != null)
             gameOverScreen.SetActive(false);
-
-        // Автопоиск компонентов
+        
         if (playerTransform == null)
         {
             var player = GameObject.FindGameObjectWithTag("Player");
@@ -48,44 +46,31 @@ public class GameStateManager : MonoBehaviour
 
         if (orderScreenUI == null)
             orderScreenUI = FindAnyObjectByType<OrderScreenUI>();
-
-        // Собираем всех полицейских на сцене
+        
         RefreshPoliceList();
     }
-
-    /// <summary>
-    /// Обновить список полицейских (вызывать если полицейские спавнятся динамически)
-    /// </summary>
+    
     public void RefreshPoliceList()
     {
         allPolice.Clear();
         allPolice.AddRange(FindObjectsOfType<PoliceOfficer>());
-        Debug.Log($"[GameStateManager] Найдено полицейских: {allPolice.Count}");
     }
-
-    /// <summary>
-    /// Начать сделку на чёрном рынке с проверкой полицейских
-    /// </summary>
+    
+    // Начать сделку  с проверкой полицейских
     public void StartBlackMarketDeal()
     {
         if (IsGameOver)
             return;
 
         IsInBlackMarketDeal = true;
-        Debug.Log("[GameStateManager] Начата сделка на чёрном рынке!");
-
-        // Проверяем расстояние до всех полицейских
+        
         CheckPoliceProximity();
     }
 
-    /// <summary>
-    /// Проверить близость полицейских (вызывается при начале сделки)
-    /// </summary>
     void CheckPoliceProximity()
     {
         if (playerTransform == null)
         {
-            Debug.LogWarning("[GameStateManager] Не найден Transform игрока!");
             return;
         }
 
@@ -100,21 +85,17 @@ public class GameStateManager : MonoBehaviour
 
             if (distance <= policeDetectionRadius)
             {
-                Debug.Log($"[GameStateManager] ⚠️ Полицейский '{police.name}' обнаружен на расстоянии {distance:F1}м!");
                 policeNearby = true;
             }
         }
 
         if (!policeNearby)
         {
-            Debug.Log("[GameStateManager] ✅ Полицейских поблизости нет, сделка безопасна");
+            Debug.Log("[GameStateManager] Полицейских поблизости нет");
         }
-        // Если полицейские рядом, они начнут погоню и вызовут OnPlayerCaughtByPolice()
     }
-
-    /// <summary>
-    /// Вызывается полицейским когда он ловит игрока
-    /// </summary>
+    
+    // Вызывается полицейским когда он ловит игрока
     public void OnPlayerCaughtByPolice(string officerName)
     {
         if (IsGameOver)
@@ -125,10 +106,8 @@ public class GameStateManager : MonoBehaviour
         DisablePlayerMovement();
         GameOver("Вас поймали полицейские!");
     }
-
-    /// <summary>
-    /// Завершить сделку на чёрном рынке (вызывается при продаже)
-    /// </summary>
+    
+    // Завершить сделку на чёрном рынке (при продаже)
     public void EndBlackMarketDeal()
     {
         if (IsGameOver)
@@ -137,10 +116,8 @@ public class GameStateManager : MonoBehaviour
         IsInBlackMarketDeal = false;
         Debug.Log("[GameStateManager] Сделка завершена!");
     }
-
-    /// <summary>
-    /// Отключить передвижение игрока (оставить вращение камеры)
-    /// </summary>
+    
+    // Отключить передвижение игрока 
     void DisablePlayerMovement()
     {
         if (movementDisabled)
@@ -154,10 +131,8 @@ public class GameStateManager : MonoBehaviour
 
         movementDisabled = true;
     }
-
-    /// <summary>
-    /// Включить передвижение игрока обратно
-    /// </summary>
+    
+    // Включить передвижение игрока
     void EnablePlayerMovement()
     {
         if (!movementDisabled)
@@ -171,10 +146,7 @@ public class GameStateManager : MonoBehaviour
 
         movementDisabled = false;
     }
-
-    /// <summary>
-    /// Game Over с кастомным сообщением
-    /// </summary>
+    
     public void GameOver(string reason = "Game Over")
     {
         if (IsGameOver)
@@ -183,7 +155,7 @@ public class GameStateManager : MonoBehaviour
         IsGameOver = true;
         IsInBlackMarketDeal = false;
 
-        Debug.Log($"[GameStateManager] GAME OVER! Причина: {reason}");
+        Debug.Log($"[GameStateManager] GAME OVER!");
 
         DisablePlayerMovement();
 
@@ -199,10 +171,8 @@ public class GameStateManager : MonoBehaviour
             gameOverScreen.SetActive(true);
         }
     }
-
-    /// <summary>
-    /// Перезапустить игру
-    /// </summary>
+    
+    // Перезапустить игру
     public void RestartGame()
     {
         Time.timeScale = 1f;

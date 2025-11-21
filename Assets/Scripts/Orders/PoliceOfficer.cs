@@ -1,8 +1,5 @@
 using UnityEngine;
 
-/// <summary>
-/// Полицейский, который ловит игрока при продаже скупщику
-/// </summary>
 [RequireComponent(typeof(AudioSource))]
 public class PoliceOfficer : MonoBehaviour
 {
@@ -32,7 +29,6 @@ public class PoliceOfficer : MonoBehaviour
 
     void Start()
     {
-        // Настройка аудио
         audioSource = GetComponent<AudioSource>();
         if (sirenSound != null && audioSource != null)
         {
@@ -45,8 +41,7 @@ public class PoliceOfficer : MonoBehaviour
             audioSource.minDistance = 0f;
             audioSource.Play();
         }
-
-        // Автопоиск компонентов
+        
         if (gameStateManager == null)
             gameStateManager = FindObjectOfType<GameStateManager>();
 
@@ -62,8 +57,7 @@ public class PoliceOfficer : MonoBehaviour
     {
         if (playerTransform == null || gameStateManager == null)
             return;
-
-        // Если игра окончена, останавливаем погоню
+        
         if (gameStateManager.IsGameOver)
         {
             StopChase();
@@ -72,7 +66,7 @@ public class PoliceOfficer : MonoBehaviour
 
         float distance = Vector3.Distance(transform.position, playerTransform.position);
 
-        // Управление громкостью сирены по расстоянию (для 3D звука это дополнительный контроль)
+        // Управление громкостью сирены по расстоянию 
         if (audioSource != null && audioSource.isPlaying)
         {
             if (distance >= detectionRadius)
@@ -81,19 +75,17 @@ public class PoliceOfficer : MonoBehaviour
             }
             else
             {
-                // Громче когда ближе
                 float normalizedDistance = distance / detectionRadius;
                 audioSource.volume = Mathf.Lerp(1f, 0.3f, normalizedDistance);
             }
         }
 
-        // Логирование состояния для отладки
         if (gameStateManager.IsInBlackMarketDeal)
         {
             Debug.Log($"[PoliceOfficer] {name} - Сделка активна! Расстояние до игрока: {distance:F1}м (радиус: {detectionRadius}м)");
         }
 
-        // Проверяем нужно ли начать погоню
+
         if (gameStateManager.IsInBlackMarketDeal && distance <= detectionRadius)
         {
             if (!isChasing)
@@ -115,8 +107,7 @@ public class PoliceOfficer : MonoBehaviour
     {
         isChasing = true;
         Debug.Log($"[PoliceOfficer] 🚨 {name} НАЧАЛ ПОГОНЮ! Игрок обнаружен в радиусе {detectionRadius}м!");
-
-        // Увеличиваем громкость сирены
+        
         if (audioSource != null)
         {
             audioSource.volume = 1f;
@@ -127,15 +118,12 @@ public class PoliceOfficer : MonoBehaviour
     void ChasePlayer(float distance)
     {
         Debug.Log($"[PoliceOfficer] {name} - Преследование! Расстояние: {distance:F1}м, дистанция поимки: {catchDistance}м");
-
-        // Двигаемся к игроку
+        
         Vector3 direction = (playerTransform.position - transform.position).normalized;
         transform.position += direction * chaseSpeed * Time.deltaTime;
-
-        // Смотрим на игрока
+        
         transform.LookAt(playerTransform);
-
-        // Проверяем поимку
+        
         if (distance <= catchDistance)
         {
             Debug.Log($"[PoliceOfficer] {name} - Игрок в зоне поимки!");

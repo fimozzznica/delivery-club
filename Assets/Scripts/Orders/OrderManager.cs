@@ -5,12 +5,10 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
 
-/// <summary>
-/// Управляет системой заказов: создание, выполнение, завершение
-/// </summary>
+
 public class OrderManager : MonoBehaviour
 {
-    // События для обновления UI
+
     [System.Serializable]
     public class OrderEvent : UnityEvent<Order> { }
 
@@ -23,7 +21,7 @@ public class OrderManager : MonoBehaviour
     public OrderStateEvent OnOrderStateChanged = new OrderStateEvent();
 
     [Header("Объекты сцены")]
-    [Tooltip("Коробки для доставки (автопоиск если пусто)")]
+    [Tooltip("Коробки для доставки")]
     public Box[] boxes;
 
     [Tooltip("Точки доставки (автопоиск если пусто)")]
@@ -40,8 +38,7 @@ public class OrderManager : MonoBehaviour
     public float playerRating = 4.8f;
 
     public int currentLevel = 4;
-
-    // Класс заказа
+    
     [Serializable]
     public class Order
     {
@@ -50,17 +47,14 @@ public class OrderManager : MonoBehaviour
         public DropoffPoint dropoff;
         public bool parentWasInactive;
     }
-
-    // Приватные поля
+    
     private Order _currentOrder;
     private int _idCounter = 0;
     private bool _orderStarted = false;
-
-    // Константы
-    private const float BASE_DELIVERY_PRICE = 50f;
+    
+    private const float BASE_DELIVERY_PRICE = 200f;
     private const float PACKAGE_VALUE_PERCENT = 0.03f;
-
-    // Публичные свойства
+    
     public Order CurrentOrder => _currentOrder;
     public bool HasActiveOrder => _currentOrder != null;
     public bool IsOrderStarted => _orderStarted;
@@ -83,10 +77,7 @@ public class OrderManager : MonoBehaviour
             StartCoroutine(GenerateLoop());
         }
     }
-
-    /// <summary>
-    /// Инициализация точек доставки
-    /// </summary>
+    
     void InitializeDropoffs()
     {
         if (dropoffs == null || dropoffs.Length == 0)
@@ -111,10 +102,7 @@ public class OrderManager : MonoBehaviour
             Debug.Log($"[OrderManager] Найдено точек доставки: {dropoffs.Length}");
         }
     }
-
-    /// <summary>
-    /// Инициализация коробок
-    /// </summary>
+    
     void InitializeBoxes()
     {
         if (boxes == null || boxes.Length == 0)
@@ -134,10 +122,8 @@ public class OrderManager : MonoBehaviour
             Debug.Log($"[OrderManager] Найдено коробок: {boxes.Length}");
         }
     }
-
-    /// <summary>
-    /// Корутина автогенерации заказов
-    /// </summary>
+    
+    //автогенерация заказов
     IEnumerator GenerateLoop()
     {
         var wait = new WaitForSeconds(spawnInterval);
@@ -152,10 +138,8 @@ public class OrderManager : MonoBehaviour
             yield return wait;
         }
     }
-
-    /// <summary>
-    /// Создать новый заказ
-    /// </summary>
+    
+    // Создать новый заказ
     public void CreateOrder()
     {
         if (HasActiveOrder)
@@ -183,12 +167,10 @@ public class OrderManager : MonoBehaviour
             Debug.LogWarning("[OrderManager] Нет доступных коробок для заказа");
             return;
         }
-
-        // Выбираем случайную коробку и точку доставки
+        
         var box = candidates[UnityEngine.Random.Range(0, candidates.Count)];
         var dropoff = dropoffs[UnityEngine.Random.Range(0, dropoffs.Length)];
-
-        // Проверяем нужно ли активировать родителя
+        
         bool parentWasInactive = box.transform.parent != null &&
                                  !box.transform.parent.gameObject.activeInHierarchy;
 
@@ -202,8 +184,7 @@ public class OrderManager : MonoBehaviour
         };
 
         box.Assign(_currentOrder.id, dropoff);
-
-        // Активируем родителя если нужно
+        
         if (parentWasInactive)
         {
             box.transform.parent.gameObject.SetActive(true);
@@ -214,16 +195,12 @@ public class OrderManager : MonoBehaviour
 
         _orderStarted = false;
 
-        Debug.Log($"[OrderManager] ✅ Заказ #{_currentOrder.id}: {box.pickupAddress} → {dropoff.deliveryAddress}");
-
-        // События
+        Debug.Log($"[OrderManager] Заказ #{_currentOrder.id}: {box.pickupAddress} → {dropoff.deliveryAddress}");
+        
         OnOrderCreated?.Invoke(_currentOrder);
         OnOrderStateChanged?.Invoke();
     }
-
-    /// <summary>
-    /// Рассчитать оплату за доставку
-    /// </summary>
+    
     public float CalculateDeliveryPrice(Box box, DropoffPoint dropoff)
     {
         if (box == null || dropoff == null)
@@ -231,17 +208,14 @@ public class OrderManager : MonoBehaviour
 
         float price = BASE_DELIVERY_PRICE;
         price += box.price * PACKAGE_VALUE_PERCENT;
-
-        // Бонус за расстояние
+        
         float distance = Vector3.Distance(box.transform.position, dropoff.transform.position);
-        price += distance * 0.1f;
+        price += distance * 0.03f;
 
         return Mathf.Round(price);
     }
-
-    /// <summary>
-    /// Получить оплату за текущий заказ
-    /// </summary>
+    
+    // Получить оплату 
     public float GetCurrentOrderPrice()
     {
         if (!HasActiveOrder)
@@ -249,10 +223,7 @@ public class OrderManager : MonoBehaviour
 
         return CalculateDeliveryPrice(_currentOrder.box, _currentOrder.dropoff);
     }
-
-    /// <summary>
-    /// Начать выполнение заказа
-    /// </summary>
+    
     public bool StartOrder()
     {
         if (!HasActiveOrder)
@@ -268,15 +239,12 @@ public class OrderManager : MonoBehaviour
         }
 
         _orderStarted = true;
-        Debug.Log($"[OrderManager] ✅ Заказ #{_currentOrder.id} начат");
+        Debug.Log($"[OrderManager] Заказ #{_currentOrder.id} начат");
 
         OnOrderStateChanged?.Invoke();
         return true;
     }
-
-    /// <summary>
-    /// Проверить можно ли взять коробку
-    /// </summary>
+    
     public bool CanPickupBox(Box box)
     {
         if (!HasActiveOrder || _currentOrder.box != box)
@@ -290,13 +258,9 @@ public class OrderManager : MonoBehaviour
 
         return true;
     }
-
-    /// <summary>
-    /// Попытка завершить заказ
-    /// </summary>
+    
     public bool TryComplete(Box box, DropoffPoint atDropoff)
     {
-        // Проверки
         if (!HasActiveOrder)
         {
             Debug.LogWarning("[OrderManager] Нет активного заказа!");
@@ -326,51 +290,40 @@ public class OrderManager : MonoBehaviour
             Debug.LogWarning($"[OrderManager] Неверный адрес! Нужно: {_currentOrder.dropoff.deliveryAddress}");
             return false;
         }
-
-        // Сохраняем данные перед очисткой
+        
         Order completedOrder = _currentOrder;
         float payment = CalculateDeliveryPrice(box, atDropoff);
-
-        // Возвращаем коробку
+        
         box.ReturnHome();
         box.ClearAssignment();
         box.gameObject.SetActive(false);
-
-        // Деактивируем родителя если нужно
+        
         if (completedOrder.parentWasInactive && box.transform.parent != null)
         {
             box.transform.parent.gameObject.SetActive(false);
         }
-
-        // Начисляем награду
+        
         AddBalance(payment);
         UpdateRatingAfterDelivery(true);
-
-        // Очищаем заказ
+        
         _currentOrder = null;
         _orderStarted = false;
 
-        Debug.Log($"[OrderManager] 🎉 Заказ #{completedOrder.id} выполнен! +${payment:F0}, рейтинг: {playerRating:F1}");
-
-        // События
+        Debug.Log($"[OrderManager] Заказ #{completedOrder.id} выполнен! +${payment:F0}, рейтинг: {playerRating:F1}");
+        
         OnOrderCompleted?.Invoke(completedOrder);
         OnOrderStateChanged?.Invoke();
 
         return true;
     }
-
-    /// <summary>
-    /// Добавить деньги игроку
-    /// </summary>
+    
     public void AddBalance(float amount)
     {
         playerBalance += amount;
         Debug.Log($"[OrderManager] Баланс: ${playerBalance:F0} (+${amount:F0})");
     }
-
-    /// <summary>
-    /// Обновить рейтинг после доставки
-    /// </summary>
+    
+    // Обновить рейтинг 
     void UpdateRatingAfterDelivery(bool success)
     {
         if (success)
@@ -385,11 +338,9 @@ public class OrderManager : MonoBehaviour
         Debug.Log($"[OrderManager] Рейтинг: {playerRating:F1}");
         UpdateLevel();
     }
+    
 
-    /// <summary>
-    /// Обновить доступный уровень на основе рейтинга
-    /// </summary>
-    void UpdateLevel()
+    void UpdateLevel()    // Обновить доступный уровень на основе рейтинга
     {
         if (playerRating >= 4.8f)
             currentLevel = 4;
@@ -402,10 +353,8 @@ public class OrderManager : MonoBehaviour
 
         Debug.Log($"[OrderManager] Доступный уровень: {currentLevel}");
     }
-
-    /// <summary>
-    /// Проверить доступен ли уровень заказов
-    /// </summary>
+    
+    // Проверить доступен ли уровень заказов
     public bool IsLevelUnlocked(int level)
     {
         if (level <= 1)
@@ -422,10 +371,8 @@ public class OrderManager : MonoBehaviour
 
         return false;
     }
-
-    /// <summary>
-    /// Очистить текущий заказ (для внешнего использования)
-    /// </summary>
+    
+    // Очистить заказ 
     public void ClearCurrentOrder()
     {
         _currentOrder = null;
@@ -434,9 +381,7 @@ public class OrderManager : MonoBehaviour
         Debug.Log("[OrderManager] Заказ очищен");
     }
 
-    /// <summary>
-    /// Генерация ID заказа
-    /// </summary>
+
     string NewId()
     {
         _idCounter++;

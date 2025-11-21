@@ -38,8 +38,7 @@ public class Box : MonoBehaviour
     {
         var collider = GetComponent<Collider>();
         _rigidbody = GetComponent<Rigidbody>();
-
-        // Ищем OrderManager если не назначен
+        
         if (orderManager == null)
         {
             orderManager = FindObjectOfType<OrderManager>();
@@ -48,17 +47,10 @@ public class Box : MonoBehaviour
 
     void OnEnable()
     {
-        // Сохраняем домашнюю позицию при первой активации
+        // Сохраняем позицию при первой активации
         if (!_homePositionSaved)
         {
             SaveHomePosition();
-        }
-
-        // Делаем коробку кинематической до разрешения на взятие
-        _canBePickedUp = false;
-        if (_rigidbody != null)
-        {
-            _rigidbody.isKinematic = true;
         }
     }
 
@@ -83,8 +75,7 @@ public class Box : MonoBehaviour
         }
 
         transform.SetPositionAndRotation(_homePosition, _homeRotation);
-
-        // Обнуляем физику
+        
         var rb = GetComponent<Rigidbody>();
         if (rb)
         {
@@ -113,10 +104,7 @@ public class Box : MonoBehaviour
         assignedDropoff = null;
         name = "Box";
     }
-
-    /// <summary>
-    /// Попытка взять коробку (вызывается из системы взаимодействия)
-    /// </summary>
+    
     public bool TryPickup()
     {
         if (!IsAssigned || orderManager == null)
@@ -124,7 +112,7 @@ public class Box : MonoBehaviour
             return false;
         }
 
-        // Проверяем разрешение через OrderManager
+        // Проверяем разрешение 
         if (!orderManager.CanPickupBox(this))
         {
             return false;
@@ -139,10 +127,7 @@ public class Box : MonoBehaviour
 
         return true;
     }
-
-    /// <summary>
-    /// Проверить, можно ли взять коробку
-    /// </summary>
+    
     public bool CanPickup()
     {
         if (!IsAssigned || orderManager == null)

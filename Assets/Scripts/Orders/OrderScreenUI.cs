@@ -2,9 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-/// <summary>
-/// Простой UI экран заказов
-/// </summary>
+
 public class OrderScreenUI : MonoBehaviour
 {
     [Header("UI Elements")]
@@ -25,7 +23,7 @@ public class OrderScreenUI : MonoBehaviour
     public OrderManager orderManager;
 
     private float playerBalance = 0f;
-    private const float DELIVERY_PRICE = 50f;
+    private const float DELIVERY_PRICE = 200f;
     private bool isGameOver = false;
 
     void Start()
@@ -38,8 +36,7 @@ public class OrderScreenUI : MonoBehaviour
 
         if (orderManager != null)
             orderManager.OnOrderStateChanged.AddListener(UpdateDisplay);
-
-        // Скрываем панель Game Over при старте
+        
         if (gameOverPanel != null)
             gameOverPanel.SetActive(false);
 
@@ -57,7 +54,6 @@ public class OrderScreenUI : MonoBehaviour
 
     void UpdateDisplay()
     {
-        // Если игра окончена, не обновляем интерфейс
         if (isGameOver)
             return;
 
@@ -139,24 +135,18 @@ public class OrderScreenUI : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Показать экран Game Over
-    /// </summary>
+
     public void ShowGameOver(string reason)
     {
         isGameOver = true;
-
-        // Скрываем все остальные панели
+        
         if (orderInfoPanel) orderInfoPanel.SetActive(false);
         if (noOrderPanel) noOrderPanel.SetActive(false);
-
-        // Показываем панель Game Over
+        
         if (gameOverPanel) gameOverPanel.SetActive(true);
-
-        // Устанавливаем текст причины
+        
         if (gameOverText) gameOverText.text = reason;
-
-        // Отключаем кнопку действия
+        
         if (actionButton) actionButton.interactable = false;
 
         Debug.Log($"[OrderScreenUI] Game Over: {reason}");

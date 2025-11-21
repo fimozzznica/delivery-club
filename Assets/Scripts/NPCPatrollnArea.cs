@@ -24,13 +24,11 @@ public class NPCPatrollnArea : MonoBehaviour
     void Start()
     {
         agent = GetComponent<NavMeshAgent>();
-
-        // Получаем индекс области
+        
         int areaIdx = NavMesh.GetAreaFromName(allowedAreaName);
         if (areaIdx == -1)
         {
             Debug.LogError($"[NPCPatrolInArea] Area '{allowedAreaName}' not found. Проверь Navigation->Areas и имя.");
-            // чтобы не сломать выборку, позволим агенту ходить по всем area
             areaMask = NavMesh.AllAreas;
         }
         else
@@ -46,8 +44,7 @@ public class NPCPatrollnArea : MonoBehaviour
         agent.isStopped = false;
         agent.updateRotation = true;
         agent.updatePosition = true;
-
-        // Запускаем патруль
+        
         StartCoroutine(PatrolRoutine());
     }
 
@@ -74,14 +71,14 @@ public class NPCPatrollnArea : MonoBehaviour
             }
             else
             {
-                // Если не нашли — подождём и попробуем снова
+                // если не нашли — снова
                 Debug.LogWarning($"[NPCPatrolInArea] Не смог найти точку в области '{allowedAreaName}'. Увеличь radius или проверь NavMesh.");
                 yield return new WaitForSeconds(1f);
             }
         }
     }
 
-    // Попытка найти случайную точку на NavMesh внутри радиуса и с учётом areaMask
+    // попытка найти случайную точку на NavMesh внутри радиуса
     bool TryGetRandomPointInArea(Vector3 center, float maxRadius, out Vector3 result)
     {
         const int maxAttempts = 30;
@@ -90,9 +87,8 @@ public class NPCPatrollnArea : MonoBehaviour
         for (int i = 0; i < maxAttempts; i++)
         {
             Vector3 randomPoint = center + Random.insideUnitSphere * maxRadius;
-            randomPoint.y = center.y; // можно убрать, если у тебя сложный ландшафт — тогда не форсить y
-
-            // NavMesh.SamplePosition принимает areaMask в последнем параметре
+            randomPoint.y = center.y; 
+            
             if (NavMesh.SamplePosition(randomPoint, out hit, maxRadius, areaMask))
             {
                 result = hit.position;
@@ -107,14 +103,11 @@ public class NPCPatrollnArea : MonoBehaviour
     void UpdateAnimatorSpeed()
     {
         if (animator == null) return;
-
-        // скорость агента в мировых единицах
+        
         float speed = agent.velocity.magnitude;
-        // можно нормализовать по ожидаемой макс. скорости, но чаще удобно передавать "сырую" скорость
         animator.SetFloat(speedParamName, speed, 0.1f, Time.deltaTime);
     }
-    
-    // Визуализация в редакторе
+
     void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.cyan;

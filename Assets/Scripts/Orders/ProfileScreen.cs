@@ -1,9 +1,7 @@
 using UnityEngine;
 using TMPro;
 
-/// <summary>
-/// Простой экран профиля игрока
-/// </summary>
+
 public class ProfileScreen : MonoBehaviour
 {
     [Header("UI Elements")]
