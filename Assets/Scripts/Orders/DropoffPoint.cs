@@ -5,7 +5,7 @@ public class DropoffPoint : MonoBehaviour
 {
     [Header("Address")]
     [Tooltip("Адрес этой точки доставки (строка для UI)")]
-    public string deliveryAddress = "Пункт выдачи";
+    public string deliveryAddress;
 
     [HideInInspector] public OrderManager manager;
 
