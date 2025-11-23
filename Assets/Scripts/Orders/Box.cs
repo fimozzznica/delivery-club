@@ -38,28 +38,18 @@ public class Box : MonoBehaviour
     {
         var collider = GetComponent<Collider>();
         _rigidbody = GetComponent<Rigidbody>();
-        
-        if (orderManager == null)
-        {
-            orderManager = FindObjectOfType<OrderManager>();
-        }
+
+        if (orderManager == null) { orderManager = FindObjectOfType<OrderManager>(); }
     }
 
     void OnEnable()
     {
-        // Сохраняем позицию при первой активации
-        if (!_homePositionSaved)
-        {
-            SaveHomePosition();
-        }
+        if (!_homePositionSaved) { SaveHomePosition(); }
     }
 
     public void SaveHomePosition()
     {
-        if (_homePositionSaved)
-        {
-            return;
-        }
+        if (_homePositionSaved) { return; }
 
         _homePosition = transform.position;
         _homeRotation = transform.rotation;
@@ -68,14 +58,9 @@ public class Box : MonoBehaviour
 
     public void ReturnHome()
     {
-        if (!_homePositionSaved)
-        {
-            Debug.LogWarning($"[Box] {name} - домашняя позиция не сохранена!");
-            return;
-        }
-
+        if (!_homePositionSaved) { return; }
         transform.SetPositionAndRotation(_homePosition, _homeRotation);
-        
+
         var rb = GetComponent<Rigidbody>();
         if (rb)
         {
@@ -90,12 +75,8 @@ public class Box : MonoBehaviour
         assignedDropoff = dropoff;
         name = $"Box_{orderId}";
 
-        // Блокируем взятие до начала заказа
         _canBePickedUp = false;
-        if (_rigidbody != null)
-        {
-            _rigidbody.isKinematic = true;
-        }
+        if (_rigidbody != null) { _rigidbody.isKinematic = true; }
     }
 
     public void ClearAssignment()
@@ -104,47 +85,22 @@ public class Box : MonoBehaviour
         assignedDropoff = null;
         name = "Box";
     }
-    
+
     public bool TryPickup()
     {
-        if (!IsAssigned || orderManager == null)
-        {
-            return false;
-        }
+        if (!IsAssigned || orderManager == null) { return false; }
+        if (!orderManager.CanPickupBox(this)) { return false; }
 
-        // Проверяем разрешение 
-        if (!orderManager.CanPickupBox(this))
-        {
-            return false;
-        }
-
-        // Разрешаем взятие
         _canBePickedUp = true;
-        if (_rigidbody != null)
-        {
-            _rigidbody.isKinematic = false;
-        }
+        if (_rigidbody != null) { _rigidbody.isKinematic = false; }
 
         return true;
     }
-    
+
     public bool CanPickup()
     {
-        if (!IsAssigned || orderManager == null)
-            return false;
-
+        if (!IsAssigned || orderManager == null) { return false; }
         return orderManager.CanPickupBox(this);
     }
 
-#if UNITY_EDITOR
-    void OnDrawGizmosSelected()
-    {
-        if (_homePositionSaved)
-        {
-            Gizmos.color = Color.green;
-            Gizmos.DrawWireCube(_homePosition, Vector3.one * 0.5f);
-            Gizmos.DrawLine(transform.position, _homePosition);
-        }
-    }
-#endif
 }

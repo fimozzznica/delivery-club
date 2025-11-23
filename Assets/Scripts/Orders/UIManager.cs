@@ -7,10 +7,7 @@ public class UIManager : MonoBehaviour
     public GameObject orderScreenPanel;
     public GameObject profileScreenPanel;
 
-    void Start()
-    {
-        ShowOrderScreen();
-    }
+    void Start(){ShowOrderScreen();}
 
     public void ShowOrderScreen()
     {

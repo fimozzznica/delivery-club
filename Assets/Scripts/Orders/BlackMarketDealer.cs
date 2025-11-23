@@ -1,30 +1,25 @@
 using UnityEngine;
 
-/// <summary>
-/// Скупщик краденых заказов
-/// Управляет зоной взаимодействия и логикой продажи
-/// </summary>
 public class BlackMarketDealer : MonoBehaviour
 {
     [Header("Settings")]
     [Range(1f, 3f)]
-    [Tooltip("Множитель цены (скупщик платит больше чем обычная доставка)")]
+    [Tooltip("Множитель цены")]
     public float priceMultiplier = 1.5f;
 
     [Tooltip("Радиус взаимодействия с игроком")]
     public float interactionRadius = 5f;
 
-    [Header("References")]
     [Tooltip("Менеджер заказов")]
     public OrderManager orderManager;
 
     [Tooltip("UI диалога скупщика")]
     public BlackMarketDialogUI dialogUI;
 
-    [Tooltip("Точка размещения товара")]
+    [Tooltip("DropoffPoint")]
     public BlackMarketDropoffPoint dropoffPoint;
 
-    [Tooltip("Менеджер состояния игры")]
+    [Tooltip("GameStateManager")]
     public GameStateManager gameStateManager;
 
     private Transform playerTransform;
@@ -32,107 +27,62 @@ public class BlackMarketDealer : MonoBehaviour
 
     void Start()
     {
-        if (orderManager == null)
-            orderManager = FindObjectOfType<OrderManager>();
-
-        if (gameStateManager == null)
-            gameStateManager = FindObjectOfType<GameStateManager>();
-
-        if (dialogUI == null)
-            dialogUI = GetComponent<BlackMarketDialogUI>();
-
-        if (dropoffPoint == null)
-            dropoffPoint = GetComponentInChildren<BlackMarketDropoffPoint>();
+        if (orderManager == null) { orderManager = FindObjectOfType<OrderManager>(); }
+        if (gameStateManager == null) { gameStateManager = FindObjectOfType<GameStateManager>(); }
+        if (dialogUI == null) { dialogUI = GetComponent<BlackMarketDialogUI>(); }
+        if (dropoffPoint == null) { dropoffPoint = GetComponentInChildren<BlackMarketDropoffPoint>(); }
 
 
         var player = GameObject.FindGameObjectWithTag("Player");
-        if (player != null)
-            playerTransform = player.transform;
+        if (player != null) { playerTransform = player.transform; }
     }
 
     void Update()
     {
-        if (playerTransform == null)
-            return;
+        if (playerTransform == null) { return; }
 
-        //  расстояние до игрока
         float distance = Vector3.Distance(transform.position, playerTransform.position);
         bool inRange = distance <= interactionRadius;
 
-        // вход/выход из зоны
         if (inRange != playerInRange)
         {
             playerInRange = inRange;
 
-            if (playerInRange)
-            {
-                OnPlayerEnterRange();
-            }
-            else
-            {
-                OnPlayerExitRange();
-            }
+            if (playerInRange) { OnPlayerEnterRange(); }
+            else { OnPlayerExitRange(); }
         }
     }
 
     void OnPlayerEnterRange()
     {
-        if (dialogUI != null)
-        {
-            dialogUI.UpdateDialogState();
-        }
+        if (dialogUI != null) { dialogUI.UpdateDialogState(); }
     }
 
     void OnPlayerExitRange()
     {
-        if (dialogUI != null)
-        {
-            dialogUI.ForceHide();
-        }
+        if (dialogUI != null) { dialogUI.ForceHide(); }
     }
-    
-    /// Рассчитать цену
+
     public float CalculateBlackMarketPrice()
     {
-        if (orderManager == null || !orderManager.HasActiveOrder)
-            return 0f;
+        if (orderManager == null || !orderManager.HasActiveOrder) { return 0f; }
 
         float normalPrice = orderManager.GetCurrentOrderPrice();
         return normalPrice * priceMultiplier;
     }
-    
-    /// Продать товар скупщику (вызывается из UI)
+
     public void SellToDealer()
     {
-        // Проверки
-        if (orderManager == null || !orderManager.HasActiveOrder || !orderManager.IsOrderStarted)
-        {
-            Debug.LogWarning("[BlackMarketDealer] Невозможно продать: нет активного начатого заказа!");
-            return;
-        }
+        if (orderManager == null || !orderManager.HasActiveOrder || !orderManager.IsOrderStarted) { return; }
+        if (dropoffPoint != null && !dropoffPoint.IsBoxPlaced()) { return; }
 
-        if (dropoffPoint != null && !dropoffPoint.IsBoxPlaced())
-        {
-            Debug.LogWarning("[BlackMarketDealer] Коробка не размещена");
-            return;
-        }
-
-        //  данные заказа
         var order = orderManager.CurrentOrder;
         float price = CalculateBlackMarketPrice();
-        
-        if (gameStateManager != null && gameStateManager.IsGameOver)
-        {
-            Debug.Log("[BlackMarketDealer] Продажа прервана - игрок пойман!");
-            return;
-        }
-        
-        orderManager.AddBalance(price);
 
-        // Понижаем рейтинг
+        if (gameStateManager != null && gameStateManager.IsGameOver) { return; }
+        orderManager.AddBalance(price);
         orderManager.playerRating = Mathf.Max(0f, orderManager.playerRating - 0.5f);
 
-        // Убираем коробку
         if (order.box != null)
         {
             order.box.ReturnHome();
@@ -144,37 +94,12 @@ public class BlackMarketDealer : MonoBehaviour
                 order.box.transform.parent.gameObject.SetActive(false);
             }
         }
-
-        // Очищаем заказ
         orderManager.ClearCurrentOrder();
 
-        // Очищаем размещение коробки (это также завершит сделку)
-        if (dropoffPoint != null)
-        {
-            dropoffPoint.ClearBox();
-        }
+        if (dropoffPoint != null) { dropoffPoint.ClearBox(); }
 
-        Debug.Log($"[BlackMarketDealer] Товар продан за ${price:F0}! Рейтинг упал до {orderManager.playerRating:F1}");
-
-        // Скрываем диалог
-        if (dialogUI != null)
-        {
-            dialogUI.ForceHide();
-        }
+        if (dialogUI != null) { dialogUI.ForceHide(); }
     }
 
-    // Проверить находится ли игрок в зоне взаимодействия
-
-    public bool IsPlayerInRange()
-    {
-        return playerInRange;
-    }
-
-#if UNITY_EDITOR
-    void OnDrawGizmosSelected()
-    {
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, interactionRadius);
-    }
-#endif
+    public bool IsPlayerInRange() { return playerInRange; }
 }

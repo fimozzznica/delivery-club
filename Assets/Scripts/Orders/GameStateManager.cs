@@ -34,145 +34,88 @@ public class GameStateManager : MonoBehaviour
         IsInBlackMarketDeal = false;
         IsGameOver = false;
 
-        if (gameOverScreen != null)
-            gameOverScreen.SetActive(false);
-        
+        if (gameOverScreen != null) { gameOverScreen.SetActive(false); }
+
         if (playerTransform == null)
         {
             var player = GameObject.FindGameObjectWithTag("Player");
-            if (player != null)
-                playerTransform = player.transform;
+            if (player != null) { playerTransform = player.transform; }
         }
 
-        if (orderScreenUI == null)
-            orderScreenUI = FindAnyObjectByType<OrderScreenUI>();
-        
+        if (orderScreenUI == null) { orderScreenUI = FindAnyObjectByType<OrderScreenUI>(); }
         RefreshPoliceList();
     }
-    
+
     public void RefreshPoliceList()
     {
         allPolice.Clear();
         allPolice.AddRange(FindObjectsOfType<PoliceOfficer>());
     }
-    
-    // Начать сделку  с проверкой полицейских
+
+
     public void StartBlackMarketDeal()
     {
-        if (IsGameOver)
-            return;
-
+        if (IsGameOver) { return; }
         IsInBlackMarketDeal = true;
-        
         CheckPoliceProximity();
     }
 
     void CheckPoliceProximity()
     {
-        if (playerTransform == null)
-        {
-            return;
-        }
+        if (playerTransform == null) { return; }
 
         bool policeNearby = false;
 
         foreach (var police in allPolice)
         {
-            if (police == null)
-                continue;
-
+            if (police == null) { continue; }
             float distance = Vector3.Distance(playerTransform.position, police.transform.position);
-
-            if (distance <= policeDetectionRadius)
-            {
-                policeNearby = true;
-            }
-        }
-
-        if (!policeNearby)
-        {
-            Debug.Log("[GameStateManager] Полицейских поблизости нет");
+            if (distance <= policeDetectionRadius) { policeNearby = true; }
         }
     }
-    
-    // Вызывается полицейским когда он ловит игрока
+
     public void OnPlayerCaughtByPolice(string officerName)
     {
-        if (IsGameOver)
-            return;
-
-        Debug.Log($"[GameStateManager] Игрок пойман полицейским '{officerName}'!");
+        if (IsGameOver) { return; }
 
         DisablePlayerMovement();
         GameOver("Вас поймали полицейские!");
     }
-    
-    // Завершить сделку на чёрном рынке (при продаже)
+
+
     public void EndBlackMarketDeal()
     {
-        if (IsGameOver)
-            return;
-
+        if (IsGameOver) { return; }
         IsInBlackMarketDeal = false;
-        Debug.Log("[GameStateManager] Сделка завершена!");
     }
-    
-    // Отключить передвижение игрока 
+
+
     void DisablePlayerMovement()
     {
-        if (movementDisabled)
-            return;
-
-        if (movementProvider != null)
-        {
-            movementProvider.enabled = false;
-            Debug.Log($"[GameStateManager] Передвижение отключено");
-        }
-
+        if (movementDisabled) { return; }
+        if (movementProvider != null) { movementProvider.enabled = false; }
         movementDisabled = true;
     }
-    
-    // Включить передвижение игрока
+
+
     void EnablePlayerMovement()
     {
-        if (!movementDisabled)
-            return;
-
-        if (movementProvider != null)
-        {
-            movementProvider.enabled = true;
-            Debug.Log($"[GameStateManager] Передвижение включено");
-        }
-
+        if (!movementDisabled) { return; }
+        if (movementProvider != null) { movementProvider.enabled = true; }
         movementDisabled = false;
     }
-    
+
     public void GameOver(string reason = "Game Over")
     {
-        if (IsGameOver)
-            return;
-
+        if (IsGameOver) { return; }
         IsGameOver = true;
         IsInBlackMarketDeal = false;
-
-        Debug.Log($"[GameStateManager] GAME OVER!");
-
         DisablePlayerMovement();
-
-        // Показываем Game Over на экране заказов
-        if (orderScreenUI != null)
-        {
-            orderScreenUI.ShowGameOver(reason);
-        }
-
-        // Показываем отдельный экран Game Over если есть
-        if (gameOverScreen != null)
-        {
-            gameOverScreen.SetActive(true);
-        }
+        if (orderScreenUI != null) { orderScreenUI.ShowGameOver(reason); }
+        if (gameOverScreen != null) { gameOverScreen.SetActive(true); }
     }
-    
-    // Перезапустить игру
+
+
     public void RestartGame()
     {
         Time.timeScale = 1f;
@@ -186,15 +129,4 @@ public class GameStateManager : MonoBehaviour
         Time.timeScale = 1f;
         EnablePlayerMovement();
     }
-
-#if UNITY_EDITOR
-    void OnDrawGizmosSelected()
-    {
-        if (playerTransform != null)
-        {
-            Gizmos.color = Color.yellow;
-            Gizmos.DrawWireSphere(playerTransform.position, policeDetectionRadius);
-        }
-    }
-#endif
 }
