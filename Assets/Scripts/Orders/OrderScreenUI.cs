@@ -95,7 +95,7 @@ public class OrderScreenUI : MonoBehaviour
     {
         if (orderManager == null) { return; }
         if (balanceText) { balanceText.text = $"${orderManager.PlayerBalance:F0}"; }
-        if (ratingText) { ratingText.text = $"{orderManager.PlayerRating:F1} ★"; }
+        if (ratingText) { ratingText.text = $"{orderManager.PlayerRating:F1}"; }
     }
 
     void OnActionButtonClick()
