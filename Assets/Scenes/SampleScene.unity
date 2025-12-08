@@ -78876,20 +78876,6 @@ MonoBehaviour:
   lateralThreshold: 2.5
   collisionIntensityScale: 3.6
   vibrationIntensityScale: 0.1
---- !u!114 &1039194722
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1039194717}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b38e4317c1f3429ba667e0e4e59637f5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ipAddress: 127.0.0.1
-  port: 6065
 --- !u!114 &1039194723
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -78912,6 +78898,35 @@ MonoBehaviour:
   currentYaw: 0
   currentPitch: 0
   currentRoll: 0
+--- !u!114 &1039194724
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1039194717}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c11f01b4dd5842f448de552b90790951, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ipAddress: 127.0.0.1
+  port: 6065
+  moveSpeed: 2.5
+  terrain: {fileID: 0}
+  rotationSpeed: 45
+  maxPitch: 15
+  minPitch: -21
+  maxYaw: 180
+  maxRoll: 10
+  rollSmoothTime: 0.15
+  moveAction: {fileID: 0}
+  rotateAction: {fileID: 0}
+  toggleHealthBarAction: {fileID: 0}
+  xrOrigin: {fileID: 0}
+  heightSmoothTime: 0.1
+  healthBarCanvas: {fileID: 0}
+  fadeOutTime: 0.2
 --- !u!65 &1039614857
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -127746,10 +127761,10 @@ PrefabInstance:
       addedObject: {fileID: 1039194721}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 3da1e7ea15e144374975d62cf9a8b74e, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 1039194722}
+      addedObject: {fileID: 1039194723}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 3da1e7ea15e144374975d62cf9a8b74e, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 1039194723}
+      addedObject: {fileID: 1039194724}
     - targetCorrespondingSourceObject: {fileID: 5233112405309087440, guid: 3da1e7ea15e144374975d62cf9a8b74e, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2027043231}
