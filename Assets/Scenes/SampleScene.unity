@@ -78995,6 +78995,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ipAddress: 127.0.0.1
   port: 6065
+  moveSpeed: 2.5
+  terrain: {fileID: 0}
+  rotationSpeed: 45
+  maxPitch: 15
+  minPitch: -21
+  maxYaw: 180
+  maxRoll: 10
+  rollSmoothTime: 0.15
+  moveAction: {fileID: 0}
+  rotateAction: {fileID: 0}
+  toggleHealthBarAction: {fileID: 0}
+  xrOrigin: {fileID: 975820836}
+  heightSmoothTime: 0.1
+  healthBarCanvas: {fileID: 0}
+  fadeOutTime: 0.2
 --- !u!114 &1039194723
 MonoBehaviour:
   m_ObjectHideFlags: 0
