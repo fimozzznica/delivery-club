@@ -9,42 +9,21 @@ public class DropoffPoint : MonoBehaviour
 
     [HideInInspector] public OrderManager manager;
 
-    void Awake()
-    {
-        var collider = GetComponent<Collider>();
-        if (collider == null)
-        {
-            Debug.LogError($"[DropoffPoint] {name} - нет коллайдера! Компонент не будет работать!");
-        }
-    }
+    void Awake() { var collider = GetComponent<Collider>(); }
 
     void Reset()
     {
         var c = GetComponent<Collider>();
-        if (c)
-        {
-            c.isTrigger = true;
-        }
+        if (c) { c.isTrigger = true; }
     }
 
     void OnTriggerEnter(Collider other)
     {
         var box = other.GetComponentInParent<Box>();
-        if (!box)
-        {
-            return;
-        }
-
+        if (!box) { return; }
         if (box.assignedDropoff == this)
         {
-            if (manager)
-            {
-                manager.TryComplete(box, this);
-            }
-            else
-            {
-                Debug.LogError($"[DropoffPoint] {name} - НЕТ МЕНЕДЖЕРА! Не могу завершить заказ.");
-            }
+            if (manager) { manager.TryComplete(box, this); }
         }
     }
 }

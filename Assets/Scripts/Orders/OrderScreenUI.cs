@@ -14,6 +14,7 @@ public class OrderScreenUI : MonoBehaviour
     public TextMeshProUGUI deliveryText;
     public TextMeshProUGUI deliveryPriceText;
     public TextMeshProUGUI balanceText;
+    public TextMeshProUGUI ratingText;
     public TextMeshProUGUI noOrderText;
     public TextMeshProUGUI gameOverText;
     public Button actionButton;
@@ -22,43 +23,28 @@ public class OrderScreenUI : MonoBehaviour
     [Header("References")]
     public OrderManager orderManager;
 
-    private float playerBalance = 0f;
-    private const float DELIVERY_PRICE = 200f;
     private bool isGameOver = false;
 
     void Start()
     {
-        if (orderManager == null)
-            orderManager = FindObjectOfType<OrderManager>();
-
-        if (actionButton != null)
-            actionButton.onClick.AddListener(OnActionButtonClick);
-
-        if (orderManager != null)
-            orderManager.OnOrderStateChanged.AddListener(UpdateDisplay);
-        
-        if (gameOverPanel != null)
-            gameOverPanel.SetActive(false);
+        if (orderManager == null) { orderManager = FindObjectOfType<OrderManager>(); }
+        if (actionButton != null) { actionButton.onClick.AddListener(OnActionButtonClick); }
+        if (orderManager != null) { orderManager.OnOrderStateChanged.AddListener(UpdateDisplay); }
+        if (gameOverPanel != null) { gameOverPanel.SetActive(false); }
 
         UpdateDisplay();
     }
 
     void OnDestroy()
     {
-        if (actionButton != null)
-            actionButton.onClick.RemoveListener(OnActionButtonClick);
-
-        if (orderManager != null)
-            orderManager.OnOrderStateChanged.RemoveListener(UpdateDisplay);
+        if (actionButton != null) { actionButton.onClick.RemoveListener(OnActionButtonClick); }
+        if (orderManager != null) { orderManager.OnOrderStateChanged.RemoveListener(UpdateDisplay); }
     }
 
     void UpdateDisplay()
     {
-        if (isGameOver)
-            return;
-
-        UpdateBalance();
-
+        if (isGameOver) { return; }
+        UpdatePlayerStats();
         if (orderManager == null || !orderManager.HasActiveOrder)
         {
             ShowNoOrder();
@@ -83,7 +69,8 @@ public class OrderScreenUI : MonoBehaviour
         if (orderIdText) orderIdText.text = $"Заказ #{order.id}";
         if (pickupText) pickupText.text = $"Забрать: {order.box.pickupAddress}";
         if (deliveryText) deliveryText.text = $"Доставить: {order.dropoff.deliveryAddress}";
-        if (deliveryPriceText) deliveryPriceText.text = $"Оплата: ${DELIVERY_PRICE:F0}";
+        float deliveryPrice = orderManager != null ? orderManager.CalculateDeliveryPrice(order.box, order.dropoff) : 0f;
+        if (deliveryPriceText) deliveryPriceText.text = $"Оплата: ${deliveryPrice:F0}";
 
         UpdateButton(orderManager.IsOrderStarted);
     }
@@ -101,36 +88,27 @@ public class OrderScreenUI : MonoBehaviour
     void UpdateButton(bool orderStarted)
     {
         if (actionButton) actionButton.interactable = true;
-        if (actionButtonText)
-            actionButtonText.text = orderStarted ? "Завершить заказ" : "Начать заказ";
+        if (actionButtonText) { actionButtonText.text = orderStarted ? "Завершить заказ" : "Начать заказ"; }
     }
 
-    void UpdateBalance()
+    void UpdatePlayerStats()
     {
-        if (balanceText)
-            balanceText.text = $"${playerBalance:F0}";
+        if (orderManager == null) { return; }
+        if (balanceText) { balanceText.text = $"${orderManager.PlayerBalance:F0}"; }
+        if (ratingText) { ratingText.text = $"{orderManager.PlayerRating:F1}"; }
     }
 
     void OnActionButtonClick()
     {
-        if (orderManager == null || !orderManager.HasActiveOrder || isGameOver)
-            return;
+        if (orderManager == null || !orderManager.HasActiveOrder || isGameOver) { return; }
 
-        if (!orderManager.IsOrderStarted)
-        {
-            orderManager.StartOrder();
-        }
+        if (!orderManager.IsOrderStarted) { orderManager.StartOrder(); }
         else
         {
             var order = orderManager.CurrentOrder;
             if (orderManager.TryComplete(order.box, order.dropoff))
             {
-                playerBalance += DELIVERY_PRICE;
-                UpdateBalance();
-            }
-            else
-            {
-                Debug.Log("Доставьте груз в правильное место!");
+                UpdatePlayerStats();
             }
         }
     }
@@ -139,16 +117,10 @@ public class OrderScreenUI : MonoBehaviour
     public void ShowGameOver(string reason)
     {
         isGameOver = true;
-        
         if (orderInfoPanel) orderInfoPanel.SetActive(false);
         if (noOrderPanel) noOrderPanel.SetActive(false);
-        
         if (gameOverPanel) gameOverPanel.SetActive(true);
-        
         if (gameOverText) gameOverText.text = reason;
-        
         if (actionButton) actionButton.interactable = false;
-
-        Debug.Log($"[OrderScreenUI] Game Over: {reason}");
     }
 }

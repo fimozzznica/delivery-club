@@ -82,7 +82,7 @@ public class BlackMarketDialogUI : MonoBehaviour
 
     [Tooltip("Ссылка на GameStateManager")]
     public GameStateManager gameStateManager;
-    
+
     private enum DialogState
     {
         Hidden,
@@ -97,230 +97,140 @@ public class BlackMarketDialogUI : MonoBehaviour
 
     void Start()
     {
-        if (dealer == null)
-            dealer = GetComponent<BlackMarketDealer>();
+        if (dealer == null) { dealer = GetComponent<BlackMarketDealer>(); }
+        if (orderManager == null) { orderManager = FindObjectOfType<OrderManager>(); }
+        if (gameStateManager == null) { gameStateManager = FindObjectOfType<GameStateManager>(); }
 
-        if (orderManager == null)
-            orderManager = FindObjectOfType<OrderManager>();
+        if (itemNameButton != null) { itemNameButton.onClick.AddListener(OnItemNameButtonClick); }
+        if (sellButton != null) { sellButton.onClick.AddListener(OnSellButtonClick); }
+        if (declineButton != null) { declineButton.onClick.AddListener(OnDeclineButtonClick); }
+        if (infoButton != null) { infoButton.onClick.AddListener(OnInfoButtonClick); }
+        if (backFromInfoButton != null) { backFromInfoButton.onClick.AddListener(OnBackFromInfoClick); }
+        if (orderManager != null) { orderManager.OnOrderStateChanged.AddListener(UpdateDialogState); }
 
-        if (gameStateManager == null)
-            gameStateManager = FindObjectOfType<GameStateManager>();
-        
-        if (itemNameButton != null)
-            itemNameButton.onClick.AddListener(OnItemNameButtonClick);
-
-        if (sellButton != null)
-            sellButton.onClick.AddListener(OnSellButtonClick);
-
-        if (declineButton != null)
-            declineButton.onClick.AddListener(OnDeclineButtonClick);
-
-        if (infoButton != null)
-            infoButton.onClick.AddListener(OnInfoButtonClick);
-
-        if (backFromInfoButton != null)
-            backFromInfoButton.onClick.AddListener(OnBackFromInfoClick);
-
-        if (orderManager != null)
-            orderManager.OnOrderStateChanged.AddListener(UpdateDialogState);
-        
         HideDialog();
     }
 
     void OnDestroy()
     {
-        if (itemNameButton != null)
-            itemNameButton.onClick.RemoveListener(OnItemNameButtonClick);
-
-        if (sellButton != null)
-            sellButton.onClick.RemoveListener(OnSellButtonClick);
-
-        if (declineButton != null)
-            declineButton.onClick.RemoveListener(OnDeclineButtonClick);
-
-        if (infoButton != null)
-            infoButton.onClick.RemoveListener(OnInfoButtonClick);
-
-        if (backFromInfoButton != null)
-            backFromInfoButton.onClick.RemoveListener(OnBackFromInfoClick);
-
-        if (orderManager != null)
-            orderManager.OnOrderStateChanged.RemoveListener(UpdateDialogState);
+        if (itemNameButton != null) { itemNameButton.onClick.RemoveListener(OnItemNameButtonClick); }
+        if (sellButton != null) { sellButton.onClick.RemoveListener(OnSellButtonClick); }
+        if (declineButton != null) { declineButton.onClick.RemoveListener(OnDeclineButtonClick); }
+        if (infoButton != null) { infoButton.onClick.RemoveListener(OnInfoButtonClick); }
+        if (backFromInfoButton != null) { backFromInfoButton.onClick.RemoveListener(OnBackFromInfoClick); }
+        if (orderManager != null) { orderManager.OnOrderStateChanged.RemoveListener(UpdateDialogState); }
     }
-
 
     public void UpdateDialogState()
     {
-        if (currentState == DialogState.Farewell)
-            return;
-        
+
+        if (currentState == DialogState.Farewell) { return; }
+
         bool hasActiveStartedOrder = orderManager != null &&
                                      orderManager.HasActiveOrder &&
                                      orderManager.IsOrderStarted;
 
-        if (hasActiveStartedOrder)
-        {
-            ShowQuestion();
-        }
-        else
-        {
-            HideDialog();
-        }
+        if (hasActiveStartedOrder) { ShowQuestion(); }
+        else { HideDialog(); }
     }
-    
+
     void ShowQuestion()
     {
         currentState = DialogState.Question;
 
-        if (dialogPanel != null)
-            dialogPanel.SetActive(true);
+        if (dialogPanel != null) { dialogPanel.SetActive(true); }
+        if (questionPanel != null) { questionPanel.SetActive(true); }
+        if (offerPanel != null) { offerPanel.SetActive(false); }
+        if (infoPanel != null) { infoPanel.SetActive(false); }
+        if (farewellPanel != null) { farewellPanel.SetActive(false); }
 
-        if (questionPanel != null)
-            questionPanel.SetActive(true);
+        if (questionText != null) { questionText.text = questionMessage; }
 
-        if (offerPanel != null)
-            offerPanel.SetActive(false);
-
-        if (infoPanel != null)
-            infoPanel.SetActive(false);
-
-        if (farewellPanel != null)
-            farewellPanel.SetActive(false);
-        
-        if (questionText != null)
-            questionText.text = questionMessage;
-        
         if (itemNameButtonText != null && orderManager != null && orderManager.HasActiveOrder)
         {
             var box = orderManager.CurrentOrder.box;
-            if (box != null)
-            {
-                itemNameButtonText.text = box.contentName;
-            }
-            else
-            {
-                itemNameButtonText.text = "Товар";
-            }
+            if (box != null) { itemNameButtonText.text = box.contentName; }
+            else { itemNameButtonText.text = "Товар"; }
         }
     }
-    
+
     void ShowOffer()
     {
         currentState = DialogState.Offer;
-
-        if (questionPanel != null)
-            questionPanel.SetActive(false);
-
-        if (offerPanel != null)
-            offerPanel.SetActive(true);
-
-        if (infoPanel != null)
-            infoPanel.SetActive(false);
-
-        if (farewellPanel != null)
-            farewellPanel.SetActive(false);
-        
+        if (questionPanel != null) { questionPanel.SetActive(false); }
+        if (offerPanel != null) { offerPanel.SetActive(true); }
+        if (infoPanel != null) { infoPanel.SetActive(false); }
+        if (farewellPanel != null) { farewellPanel.SetActive(false); }
         UpdateOfferText();
     }
-    
+
     void ShowInfo()
     {
         currentState = DialogState.Info;
+        if (questionPanel != null) { questionPanel.SetActive(false); }
+        if (offerPanel != null) { offerPanel.SetActive(false); }
+        if (infoPanel != null) { infoPanel.SetActive(true); }
+        if (farewellPanel != null) { farewellPanel.SetActive(false); }
 
-        if (questionPanel != null)
-            questionPanel.SetActive(false);
-
-        if (offerPanel != null)
-            offerPanel.SetActive(false);
-
-        if (infoPanel != null)
-            infoPanel.SetActive(true);
-
-        if (farewellPanel != null)
-            farewellPanel.SetActive(false);
-        
-        if (infoText != null)
-            infoText.text = infoMessage;
+        if (infoText != null) { infoText.text = infoMessage; }
     }
 
     void UpdateOfferText()
     {
-        if (offerText == null)
-            return;
-
+        if (offerText == null) { return; }
         float price = 0f;
-        
+
         if (dealer != null && orderManager != null && orderManager.HasActiveOrder)
         {
             price = dealer.CalculateBlackMarketPrice();
         }
-
         offerText.text = string.Format(offerTemplate, price.ToString("F0"));
     }
-    
+
     void ShowFarewell()
     {
         currentState = DialogState.Farewell;
 
-        if (questionPanel != null)
-            questionPanel.SetActive(false);
+        if (questionPanel != null) { questionPanel.SetActive(false); }
+        if (offerPanel != null) { offerPanel.SetActive(false); }
+        if (infoPanel != null) { infoPanel.SetActive(false); }
+        if (farewellPanel != null) { farewellPanel.SetActive(true); }
+        if (farewellText != null) { farewellText.text = farewellMessage; }
 
-        if (offerPanel != null)
-            offerPanel.SetActive(false);
-
-        if (infoPanel != null)
-            infoPanel.SetActive(false);
-
-        if (farewellPanel != null)
-            farewellPanel.SetActive(true);
-
-        if (farewellText != null)
-            farewellText.text = farewellMessage;
-        
-        if (farewellCoroutine != null)
-            StopCoroutine(farewellCoroutine);
+        if (farewellCoroutine != null) { StopCoroutine(farewellCoroutine); }
 
         farewellCoroutine = StartCoroutine(HideAfterDelay());
     }
-    
+
     void HideDialog()
     {
         currentState = DialogState.Hidden;
 
-        if (dialogPanel != null)
-            dialogPanel.SetActive(false);
+        if (dialogPanel != null) { dialogPanel.SetActive(false); }
+        if (questionPanel != null) { questionPanel.SetActive(false); }
+        if (offerPanel != null) { offerPanel.SetActive(false); }
+        if (infoPanel != null) { infoPanel.SetActive(false); }
+        if (farewellPanel != null) { farewellPanel.SetActive(false); }
 
-        if (questionPanel != null)
-            questionPanel.SetActive(false);
-
-        if (offerPanel != null)
-            offerPanel.SetActive(false);
-
-        if (infoPanel != null)
-            infoPanel.SetActive(false);
-
-        if (farewellPanel != null)
-            farewellPanel.SetActive(false);
-        
         if (farewellCoroutine != null)
         {
             StopCoroutine(farewellCoroutine);
             farewellCoroutine = null;
         }
     }
-    
+
+
     IEnumerator HideAfterDelay()
     {
         yield return new WaitForSeconds(farewellDuration);
         HideDialog();
     }
-    
+
     void OnItemNameButtonClick()
     {
         if (gameStateManager != null)
         {
             gameStateManager.StartBlackMarketDeal();
-            
             if (gameStateManager.IsGameOver)
             {
                 HideDialog();
@@ -329,54 +239,27 @@ public class BlackMarketDialogUI : MonoBehaviour
         }
         ShowOffer();
     }
-    
+
     void OnSellButtonClick()
     {
-        if (dealer == null)
-        {
-            return;
-        }
-        
+        if (dealer == null) { return; }
         dealer.SellToDealer();
         HideDialog();
     }
-    
+
     void OnDeclineButtonClick()
     {
-        if (gameStateManager != null && gameStateManager.IsInBlackMarketDeal)
-        {
-            gameStateManager.EndBlackMarketDeal();
-        }
-
+        if (gameStateManager != null && gameStateManager.IsInBlackMarketDeal) { gameStateManager.EndBlackMarketDeal(); }
         ShowFarewell();
     }
-    
-    void OnInfoButtonClick()
-    {
-        ShowInfo();
-    }
-    
-    void OnBackFromInfoClick()
-    {
-        ShowOffer();
-        Debug.Log("[BlackMarketDialogUI] Возврат к предложению");
-    }
 
-    public void ForceUpdate()
-    {
-        UpdateDialogState();
-    }
-    
-    public void ForceHide()
-    {
-        HideDialog();
-    }
-    
+    void OnInfoButtonClick() { ShowInfo(); }
+    void OnBackFromInfoClick() { ShowOffer(); }
+    public void ForceUpdate() { UpdateDialogState(); }
+    public void ForceHide() { HideDialog(); }
+
     public void SetSellButtonEnabled(bool enabled)
     {
-        if (sellButton != null)
-        {
-            sellButton.interactable = enabled;
-        }
+        if (sellButton != null) { sellButton.interactable = enabled; }
     }
 }

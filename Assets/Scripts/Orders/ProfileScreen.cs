@@ -15,25 +15,17 @@ public class ProfileScreen : MonoBehaviour
 
     void Start()
     {
-        if (orderManager == null)
-            orderManager = FindObjectOfType<OrderManager>();
-
-        if (orderManager != null)
-            orderManager.OnOrderCompleted.AddListener(OnOrderCompleted);
-
+        if (orderManager == null) { orderManager = FindObjectOfType<OrderManager>(); }
+        if (orderManager != null) { orderManager.OnOrderCompleted.AddListener(OnOrderCompleted); }
         UpdateDisplay();
     }
 
     void OnDestroy()
     {
-        if (orderManager != null)
-            orderManager.OnOrderCompleted.RemoveListener(OnOrderCompleted);
+        if (orderManager != null) { orderManager.OnOrderCompleted.RemoveListener(OnOrderCompleted); }
     }
 
-    void OnEnable()
-    {
-        UpdateDisplay();
-    }
+    void OnEnable() { UpdateDisplay(); }
 
     void OnOrderCompleted(OrderManager.Order order)
     {
@@ -43,13 +35,8 @@ public class ProfileScreen : MonoBehaviour
 
     void UpdateDisplay()
     {
-        if (orderManager == null)
-            return;
-
-        if (ratingText)
-            ratingText.text = $"{orderManager.PlayerRating:F1} ★";
-
-        if (completedOrdersText)
-            completedOrdersText.text = completedOrders.ToString();
+        if (orderManager == null) { return; }
+        if (ratingText) { ratingText.text = $"{orderManager.PlayerRating:F1} ★"; }
+        if (completedOrdersText) { completedOrdersText.text = completedOrders.ToString(); }
     }
 }
