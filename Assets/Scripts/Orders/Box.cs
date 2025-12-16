@@ -47,7 +47,6 @@ public class Box : MonoBehaviour
 
     void OnEnable()
     {
-        // Сохраняем позицию при первой активации
         if (!_homePositionSaved)
         {
             SaveHomePosition();
@@ -70,7 +69,6 @@ public class Box : MonoBehaviour
     {
         if (!_homePositionSaved)
         {
-            Debug.LogWarning($"[Box] {name} - домашняя позиция не сохранена!");
             return;
         }
 
@@ -89,8 +87,7 @@ public class Box : MonoBehaviour
         orderId = id;
         assignedDropoff = dropoff;
         name = $"Box_{orderId}";
-
-        // Блокируем взятие до начала заказа
+        
         _canBePickedUp = false;
         if (_rigidbody != null)
         {
@@ -111,14 +108,12 @@ public class Box : MonoBehaviour
         {
             return false;
         }
-
-        // Проверяем разрешение 
+        
         if (!orderManager.CanPickupBox(this))
         {
             return false;
         }
-
-        // Разрешаем взятие
+        
         _canBePickedUp = true;
         if (_rigidbody != null)
         {

@@ -30,7 +30,6 @@ public class BlackMarketDropoffPoint : MonoBehaviour
 
     void Start()
     {
-        // Автопоиск компонентов
         if (dialogUI == null)
             dialogUI = GetComponentInParent<BlackMarketDialogUI>();
 
@@ -53,8 +52,7 @@ public class BlackMarketDropoffPoint : MonoBehaviour
         var box = other.GetComponentInParent<Box>();
         if (box == null)
             return;
-
-        // Проверяем что это коробка из текущего заказа
+        
         if (orderManager == null || !orderManager.HasActiveOrder)
             return;
 
@@ -62,9 +60,7 @@ public class BlackMarketDropoffPoint : MonoBehaviour
             return;
         
         currentBox = box;
-        Debug.Log($"[BlackMarketDropoffPoint] Коробка размещена");
-
-        // Активируем кнопку продажи
+        
         if (dialogUI != null)
         {
             dialogUI.SetSellButtonEnabled(true);
@@ -78,15 +74,12 @@ public class BlackMarketDropoffPoint : MonoBehaviour
             return;
         
         currentBox = null;
-        Debug.Log($"[BlackMarketDropoffPoint] Коробка убрана ");
-
-        // Завершаем сделку если она была начата
+        
         if (gameStateManager != null && gameStateManager.IsInBlackMarketDeal)
         {
             gameStateManager.EndBlackMarketDeal();
         }
-
-        // Деактивируем кнопку продажи
+        
         if (dialogUI != null)
         {
             dialogUI.SetSellButtonEnabled(false);

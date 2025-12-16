@@ -14,7 +14,7 @@ public class DropoffPoint : MonoBehaviour
         var collider = GetComponent<Collider>();
         if (collider == null)
         {
-            Debug.LogError($"[DropoffPoint] {name} - НЕТ КОЛЛАЙДЕРА! Компонент не будет работать!");
+            Debug.LogError($"[DropoffPoint] {name} - нет коллайдера! Компонент не будет работать!");
         }
     }
 

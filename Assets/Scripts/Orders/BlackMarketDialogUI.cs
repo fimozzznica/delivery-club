@@ -97,7 +97,6 @@ public class BlackMarketDialogUI : MonoBehaviour
 
     void Start()
     {
-        // Находим компоненты если не назначены
         if (dealer == null)
             dealer = GetComponent<BlackMarketDealer>();
 
@@ -106,8 +105,7 @@ public class BlackMarketDialogUI : MonoBehaviour
 
         if (gameStateManager == null)
             gameStateManager = FindObjectOfType<GameStateManager>();
-
-        // подписываемся на кнопки
+        
         if (itemNameButton != null)
             itemNameButton.onClick.AddListener(OnItemNameButtonClick);
 
@@ -125,8 +123,7 @@ public class BlackMarketDialogUI : MonoBehaviour
 
         if (orderManager != null)
             orderManager.OnOrderStateChanged.AddListener(UpdateDialogState);
-
-        // Скрываем диалог при старте
+        
         HideDialog();
     }
 
@@ -154,11 +151,9 @@ public class BlackMarketDialogUI : MonoBehaviour
 
     public void UpdateDialogState()
     {
-        // Если показываем прощание, не обновляем
         if (currentState == DialogState.Farewell)
             return;
-
-        // Проверяем есть ли активный заказ
+        
         bool hasActiveStartedOrder = orderManager != null &&
                                      orderManager.HasActiveOrder &&
                                      orderManager.IsOrderStarted;
@@ -172,9 +167,7 @@ public class BlackMarketDialogUI : MonoBehaviour
             HideDialog();
         }
     }
-
-
-    // Показать начальный вопрос 
+    
     void ShowQuestion()
     {
         currentState = DialogState.Question;
@@ -193,12 +186,10 @@ public class BlackMarketDialogUI : MonoBehaviour
 
         if (farewellPanel != null)
             farewellPanel.SetActive(false);
-
-        // устанавливаем текст 
+        
         if (questionText != null)
             questionText.text = questionMessage;
-
-        // устанавливаем название товара на кнопку
+        
         if (itemNameButtonText != null && orderManager != null && orderManager.HasActiveOrder)
         {
             var box = orderManager.CurrentOrder.box;
@@ -213,7 +204,6 @@ public class BlackMarketDialogUI : MonoBehaviour
         }
     }
     
-    // показать предложение о покупке 
     void ShowOffer()
     {
         currentState = DialogState.Offer;
@@ -229,14 +219,10 @@ public class BlackMarketDialogUI : MonoBehaviour
 
         if (farewellPanel != null)
             farewellPanel.SetActive(false);
-
-        // Обновляем текст с ценой
-        UpdateOfferText();
         
+        UpdateOfferText();
     }
-
-
-    // Показать информационное окно 
+    
     void ShowInfo()
     {
         currentState = DialogState.Info;
@@ -252,14 +238,10 @@ public class BlackMarketDialogUI : MonoBehaviour
 
         if (farewellPanel != null)
             farewellPanel.SetActive(false);
-
-        // Устанавливаем информационный текст
+        
         if (infoText != null)
             infoText.text = infoMessage;
     }
-
-
-    //обновить текст предложения с актуальной ценой
 
     void UpdateOfferText()
     {
@@ -267,8 +249,7 @@ public class BlackMarketDialogUI : MonoBehaviour
             return;
 
         float price = 0f;
-
-        // Получаем цену от дилера 
+        
         if (dealer != null && orderManager != null && orderManager.HasActiveOrder)
         {
             price = dealer.CalculateBlackMarketPrice();
@@ -276,9 +257,7 @@ public class BlackMarketDialogUI : MonoBehaviour
 
         offerText.text = string.Format(offerTemplate, price.ToString("F0"));
     }
-
-
-    // Показать прощание (После отказа)
+    
     void ShowFarewell()
     {
         currentState = DialogState.Farewell;
@@ -297,16 +276,13 @@ public class BlackMarketDialogUI : MonoBehaviour
 
         if (farewellText != null)
             farewellText.text = farewellMessage;
-
-        // Запускаем таймер скрытия
+        
         if (farewellCoroutine != null)
             StopCoroutine(farewellCoroutine);
 
         farewellCoroutine = StartCoroutine(HideAfterDelay());
     }
-
-
-    // Скрыть диалог полностью
+    
     void HideDialog()
     {
         currentState = DialogState.Hidden;
@@ -325,8 +301,7 @@ public class BlackMarketDialogUI : MonoBehaviour
 
         if (farewellPanel != null)
             farewellPanel.SetActive(false);
-
-        // Останавливаем таймер если был запущен
+        
         if (farewellCoroutine != null)
         {
             StopCoroutine(farewellCoroutine);
@@ -334,102 +309,74 @@ public class BlackMarketDialogUI : MonoBehaviour
         }
     }
     
-    // для скрытия диалога после задержки
     IEnumerator HideAfterDelay()
     {
         yield return new WaitForSeconds(farewellDuration);
         HideDialog();
     }
     
-    
-    // обработчик нажатия на кнопку с названием товара
     void OnItemNameButtonClick()
     {
-        // начало сделки когда игрок показывает товар
         if (gameStateManager != null)
         {
             gameStateManager.StartBlackMarketDeal();
-
-            // Если игра закончилась, прерываем
+            
             if (gameStateManager.IsGameOver)
             {
-                Debug.Log("[BlackMarketDialogUI] Показ товара прерван - игрок пойман!");
                 HideDialog();
                 return;
             }
         }
-
         ShowOffer();
-        Debug.Log("[BlackMarketDialogUI] Игрок показал товар скупщику - сделка началась!");
     }
     
-    // Обработчик нажатия кнопки "Продать"
     void OnSellButtonClick()
     {
         if (dealer == null)
         {
-            Debug.LogError("[BlackMarketDialogUI] Dealer не назначен!");
             return;
         }
-
-        // Вызываем метод продажи у дилера
+        
         dealer.SellToDealer();
-
-        // Скрываем диалог
         HideDialog();
-
-        Debug.Log("[BlackMarketDialogUI] Игрок продал товар!");
     }
     
-    // обработчик нажатия кнопки "Отказаться"
     void OnDeclineButtonClick()
     {
-        // Завершаем сделку при отказе
         if (gameStateManager != null && gameStateManager.IsInBlackMarketDeal)
         {
             gameStateManager.EndBlackMarketDeal();
-            Debug.Log("[BlackMarketDialogUI] Сделка завершена - игрок отказался");
         }
 
         ShowFarewell();
-        Debug.Log("[BlackMarketDialogUI] Игрок отказался от продажи");
     }
     
-    // Обработчик нажатия кнопки информации
     void OnInfoButtonClick()
     {
         ShowInfo();
-        Debug.Log("[BlackMarketDialogUI] Показана информация о сделках");
     }
     
-    // Обработчик нажатия кнопки "Назад" из информации
     void OnBackFromInfoClick()
     {
         ShowOffer();
         Debug.Log("[BlackMarketDialogUI] Возврат к предложению");
     }
 
-    //методы
-    // Принудительно обновить диалог
     public void ForceUpdate()
     {
         UpdateDialogState();
     }
     
-    // принудительно скрыть диалог (для вызова извне)
     public void ForceHide()
     {
         HideDialog();
     }
     
-    // Установить активность кнопки "Продать"
-    // Вызывается из BlackMarketDropoffPoint когда коробка размещена/убрана
     public void SetSellButtonEnabled(bool enabled)
     {
         if (sellButton != null)
         {
             sellButton.interactable = enabled;
-            Debug.Log($"[BlackMarketDialogUI] Кнопка 'Продать' {(enabled ? "активна" : "неактивна")}");
         }
     }
 }

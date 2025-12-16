@@ -54,24 +54,21 @@ public class BoxLidController : MonoBehaviour
         }
 
         openTimer = Mathf.Clamp(openTimer, 0f, delayBetweenTopAndBottom * 2f);
-
-        // Верхние створки — плавный переход
+        
         float topT = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(openTimer / delayBetweenTopAndBottom));
         topLeftLid.localRotation = Quaternion.Slerp(topLeftInitial, topLeftOpen, topT);
         topRightLid.localRotation = Quaternion.Slerp(topRightInitial, topRightOpen, topT);
-
-        // Нижние створки — с задержкой, тоже плавный переход
+        
         float bottomT = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((openTimer - delayBetweenTopAndBottom) / delayBetweenTopAndBottom));
         bottomFrontLid.localRotation = Quaternion.Slerp(bottomFrontInitial, bottomFrontOpen, bottomT);
         bottomBackLid.localRotation = Quaternion.Slerp(bottomBackInitial, bottomBackOpen, bottomT);
-
-        // Когда закрытие закончилось
+        
         if (isClosing && openTimer <= 0f)
         {
             isClosing = false;
             Debug.Log("Closing complete");
         }
-        // Когда открытие закончилось
+
         if (isOpening && openTimer >= delayBetweenTopAndBottom * 2f)
         {
             isOpening = false;

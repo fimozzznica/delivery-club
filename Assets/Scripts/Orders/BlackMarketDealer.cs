@@ -1,9 +1,5 @@
 using UnityEngine;
 
-/// <summary>
-/// Скупщик краденых заказов
-/// Управляет зоной взаимодействия и логикой продажи
-/// </summary>
 public class BlackMarketDealer : MonoBehaviour
 {
     [Header("Settings")]
@@ -54,12 +50,10 @@ public class BlackMarketDealer : MonoBehaviour
     {
         if (playerTransform == null)
             return;
-
-        //  расстояние до игрока
+        
         float distance = Vector3.Distance(transform.position, playerTransform.position);
         bool inRange = distance <= interactionRadius;
-
-        // вход/выход из зоны
+        
         if (inRange != playerInRange)
         {
             playerInRange = inRange;
@@ -91,7 +85,6 @@ public class BlackMarketDealer : MonoBehaviour
         }
     }
     
-    /// Рассчитать цену
     public float CalculateBlackMarketPrice()
     {
         if (orderManager == null || !orderManager.HasActiveOrder)
@@ -101,38 +94,29 @@ public class BlackMarketDealer : MonoBehaviour
         return normalPrice * priceMultiplier;
     }
     
-    /// Продать товар скупщику (вызывается из UI)
     public void SellToDealer()
     {
-        // Проверки
         if (orderManager == null || !orderManager.HasActiveOrder || !orderManager.IsOrderStarted)
         {
-            Debug.LogWarning("[BlackMarketDealer] Невозможно продать: нет активного начатого заказа!");
             return;
         }
 
         if (dropoffPoint != null && !dropoffPoint.IsBoxPlaced())
         {
-            Debug.LogWarning("[BlackMarketDealer] Коробка не размещена");
             return;
         }
-
-        //  данные заказа
+        
         var order = orderManager.CurrentOrder;
         float price = CalculateBlackMarketPrice();
         
         if (gameStateManager != null && gameStateManager.IsGameOver)
         {
-            Debug.Log("[BlackMarketDealer] Продажа прервана - игрок пойман!");
             return;
         }
         
         orderManager.AddBalance(price);
-
-        // Понижаем рейтинг
         orderManager.playerRating = Mathf.Max(0f, orderManager.playerRating - 0.5f);
-
-        // Убираем коробку
+        
         if (order.box != null)
         {
             order.box.ReturnHome();
@@ -144,26 +128,19 @@ public class BlackMarketDealer : MonoBehaviour
                 order.box.transform.parent.gameObject.SetActive(false);
             }
         }
-
-        // Очищаем заказ
+        
         orderManager.ClearCurrentOrder();
-
-        // Очищаем размещение коробки (это также завершит сделку)
+        
         if (dropoffPoint != null)
         {
             dropoffPoint.ClearBox();
         }
-
-        Debug.Log($"[BlackMarketDealer] Товар продан за ${price:F0}! Рейтинг упал до {orderManager.playerRating:F1}");
-
-        // Скрываем диалог
+        
         if (dialogUI != null)
         {
             dialogUI.ForceHide();
         }
     }
-
-    // Проверить находится ли игрок в зоне взаимодействия
 
     public bool IsPlayerInRange()
     {

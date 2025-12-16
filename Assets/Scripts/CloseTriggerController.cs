@@ -8,7 +8,6 @@ public class CloseTriggerController : MonoBehaviour
     {
         if (other.CompareTag("Hand"))
         {
-            Debug.Log("Close trigger entered by: " + other.name);
             box.CloseBox();
         }
     }
