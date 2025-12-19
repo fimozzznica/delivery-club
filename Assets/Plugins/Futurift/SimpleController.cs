@@ -73,7 +73,6 @@ namespace Futurift
             if (toggleHealthBarAction != null)
             {
                 toggleHealthBarAction.action.Enable();
-                toggleHealthBarAction.action.performed += OnToggleHealthBar;
             }
         }
 
