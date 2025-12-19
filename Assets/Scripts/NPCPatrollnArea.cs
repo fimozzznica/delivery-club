@@ -5,17 +5,17 @@ using UnityEngine.AI;
 public class NPCPatrollnArea : MonoBehaviour
 {
     [Header("Area settings")]
-    public string allowedAreaName = "AllowedArea"; // имя Area в Navigation -> Areas
-    public Transform centerTransform;             // центр области (если null — берём this.transform)
-    public float radius = 10f;                    // радиус поиска точек внутри области
+    public string allowedAreaName = "AllowedArea";
+    public Transform centerTransform;             
+    public float radius = 10f;                   
 
     [Header("Patrol settings")]
-    public float nextPointDistance = 0.5f;        // дистанция, при которой считаем, что достигли точки
-    public float pauseAtPoint = 0.5f;             // пауза между точками
+    public float nextPointDistance = 0.5f;        
+    public float pauseAtPoint = 0.5f;            
 
     [Header("Animation (optional)")]
-    public Animator animator;                     // если надо, можно оставить пустым
-    public string speedParamName = "Speed";       // имя параметра в Animator (float)
+    public Animator animator;                     
+    public string speedParamName = "Speed";       
 
     private NavMeshAgent agent;
     private int areaMask;
@@ -34,13 +34,11 @@ public class NPCPatrollnArea : MonoBehaviour
         else
         {
             areaMask = 1 << areaIdx;
-            agent.areaMask = areaMask; // опционально: жёсткое ограничение агента
+            agent.areaMask = areaMask; 
         }
 
-        // Центр поиска
         centerPosition = (centerTransform != null) ? centerTransform.position : transform.position;
 
-        // Убедимся, что агент не стоит на месте
         agent.isStopped = false;
         agent.updateRotation = true;
         agent.updatePosition = true;
@@ -52,17 +50,14 @@ public class NPCPatrollnArea : MonoBehaviour
     {
         while (true)
         {
-            // Ждём, пока не достигнем текущей цели (или если цели нет)
             while (agent.pathPending || agent.remainingDistance > nextPointDistance)
             {
                 UpdateAnimatorSpeed();
                 yield return null;
             }
 
-            // Пауза у точки
             yield return new WaitForSeconds(pauseAtPoint);
 
-            // Берём следующую точку в области
             Vector3 next;
             bool ok = TryGetRandomPointInArea(centerPosition, radius, out next);
             if (ok)
@@ -71,14 +66,12 @@ public class NPCPatrollnArea : MonoBehaviour
             }
             else
             {
-                // если не нашли — снова
                 Debug.LogWarning($"[NPCPatrolInArea] Не смог найти точку в области '{allowedAreaName}'. Увеличь radius или проверь NavMesh.");
                 yield return new WaitForSeconds(1f);
             }
         }
     }
 
-    // попытка найти случайную точку на NavMesh внутри радиуса
     bool TryGetRandomPointInArea(Vector3 center, float maxRadius, out Vector3 result)
     {
         const int maxAttempts = 30;

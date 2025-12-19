@@ -1,6 +1,5 @@
 ﻿using Futurift.DataSenders;
 using Futurift.Options;
-using Unity.Android.Gradle.Manifest;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.XR;
@@ -13,7 +12,6 @@ namespace Futurift
         [SerializeField] private int port = 6065;
         [Header("Movement Settings")]
         [SerializeField] private float moveSpeed = 2.5f;
-        [SerializeField] private Terrain terrain;
         [Header("Rotation Settings")]
         [SerializeField] private float rotationSpeed = 45f;
         [SerializeField] private float maxPitch = 15f; // Вниз
@@ -27,9 +25,6 @@ namespace Futurift
         [SerializeField] private InputActionReference toggleHealthBarAction;
         [SerializeField] private Transform xrOrigin; // Ссылка на XR Origin (если нужно синхронизировать)
         [SerializeField] private float heightSmoothTime = 0.1f; // Время сглаживания высоты
-        [Header("UI Settings")]
-        [SerializeField] private GameObject healthBarCanvas;
-        [SerializeField] private float fadeOutTime = 0.2f;
 
         private FutuRiftController _controller;
         private Rigidbody rb;
@@ -89,50 +84,15 @@ namespace Futurift
             if (rotateAction != null) rotateAction.action.Disable();
         }
 
-        private void OnPlayerDeath()
-        {
-            // Останавливаем FutuRiftController
-            _controller.Pitch = 0f;
-            _controller.Roll = 0f;
-        }
-
-        private void OnToggleHealthBar(InputAction.CallbackContext context)
-        {
-            if (healthBarCanvas != null)
-            {
-                healthBarCanvas.SetActive(!healthBarCanvas.activeSelf);
-            }
-        }
         private void FixedUpdate()
         {
-            Vector2 moveInput = moveAction.action.ReadValue<Vector2>();
+            Vector2 moveInput = moveAction.action.ReadValue<Vector2>(); //считываем контроллеры
             Vector2 rotateInput = rotateAction.action.ReadValue<Vector2>();
-            if (moveInput.magnitude < 0.3f) moveInput = Vector2.zero; // Мёртвая зона для движения
-            if (rotateInput.magnitude < 0.3f) rotateInput = Vector2.zero; // Мёртвая зона для поворота
 
             Vector3 moveDelta = (transform.forward * moveInput.y + transform.right * moveInput.x) * moveSpeed * Time.fixedDeltaTime;
-            if (moveInput.magnitude < 0.1f) moveDelta.x = 0; // Принудительное обнуление бокового смещения
             Vector3 newPosition = rb.position + moveDelta;
 
             rb.MovePosition(newPosition);
-
-            if (moveInput.magnitude < 0.1f)
-            {
-                if (Mathf.Abs(rb.linearVelocity.x) < 0.2f) rb.linearVelocity = new Vector3(0, rb.linearVelocity.y, rb.linearVelocity.z);
-                if (Mathf.Abs(rb.linearVelocity.y) < 0.2f) rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0, rb.linearVelocity.z);
-                if (Mathf.Abs(rb.linearVelocity.z) < 0.2f) rb.linearVelocity = new Vector3(rb.linearVelocity.x, rb.linearVelocity.y, 0);
-                rb.Sleep(); // Усыпляем при остановке
-            }
-            else
-            {
-                rb.WakeUp(); // Пробуждаем при движении
-            }
-
-            if (xrOrigin != null && moveInput.magnitude < 0.1f)
-            {
-                xrOrigin.position = transform.position;
-                xrOrigin.rotation = transform.rotation;
-            }
 
             currentYaw += rotateInput.x * rotationSpeed * Time.fixedDeltaTime;
             currentYaw = Mathf.Repeat(currentYaw, 360f);
@@ -142,17 +102,12 @@ namespace Futurift
             targetRoll = -moveInput.x * maxRoll; // Рассчитываем целевой крен
             targetRoll = Mathf.Clamp(targetRoll, -maxRoll, maxRoll);
 
+            currentRoll = Mathf.SmoothDamp(currentRoll, targetRoll, ref rollVelocity, rollSmoothTime); // сглаживание
 
-            if (Mathf.Abs(moveInput.x) < 0.3f) // Используем тот же порог, что для moveInput
-            {
-                targetRoll = 0f; // Плавно возвращаем к нулю
-            }
-            currentRoll = Mathf.SmoothDamp(currentRoll, targetRoll, ref rollVelocity, rollSmoothTime);
-
-            transform.rotation = Quaternion.Euler(currentPitch, currentYaw, currentRoll);
+            transform.rotation = Quaternion.Euler(currentPitch, currentYaw, currentRoll); // переводим в обычные углы
 
             _controller.Pitch = currentPitch;
-            _controller.Roll = currentRoll;
+            _controller.Roll = currentRoll; //применяем к капсуле
         }
     }
 }

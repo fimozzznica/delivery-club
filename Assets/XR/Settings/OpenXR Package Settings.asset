@@ -94,6 +94,7 @@ MonoBehaviour:
   - {fileID: 458774358141581208}
   - {fileID: 2800615854515923532}
   m_renderMode: 1
+  m_latencyOptimization: 0
   m_autoColorSubmissionMode: 1
   m_colorSubmissionModes:
     m_List: 00000000
@@ -220,6 +221,7 @@ MonoBehaviour:
   features:
   - {fileID: 6928893216722726513}
   m_renderMode: 1
+  m_latencyOptimization: 0
   m_autoColorSubmissionMode: 1
   m_colorSubmissionModes:
     m_List: 00000000
@@ -517,7 +519,6 @@ MonoBehaviour:
   company: Unity
   priority: 0
   required: 0
-  m_UseRightHandedNDC: 0
 --- !u!114 &-4374826117426183845
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -631,6 +632,7 @@ MonoBehaviour:
   - {fileID: -2649071290747591041}
   - {fileID: -2367806703718626426}
   m_renderMode: 1
+  m_latencyOptimization: 0
   m_autoColorSubmissionMode: 1
   m_colorSubmissionModes:
     m_List: 00000000
@@ -1064,6 +1066,7 @@ MonoBehaviour:
   - {fileID: -8909097599190958277}
   - {fileID: -8464657171489603688}
   m_renderMode: 1
+  m_latencyOptimization: 0
   m_autoColorSubmissionMode: 1
   m_colorSubmissionModes:
     m_List: 00000000
@@ -1338,6 +1341,7 @@ MonoBehaviour:
   features:
   - {fileID: -2362759596753471821}
   m_renderMode: 1
+  m_latencyOptimization: 0
   m_autoColorSubmissionMode: 1
   m_colorSubmissionModes:
     m_List: 00000000
