@@ -16,7 +16,6 @@ public class OrderScreenUI : MonoBehaviour
     public TextMeshProUGUI balanceText;
     public TextMeshProUGUI ratingText;
     public TextMeshProUGUI noOrderText;
-    public TextMeshProUGUI gameOverText;
     public Button actionButton;
     public TextMeshProUGUI actionButtonText;
 
@@ -65,7 +64,6 @@ public class OrderScreenUI : MonoBehaviour
     {
         if (orderInfoPanel) orderInfoPanel.SetActive(true);
         if (noOrderPanel) noOrderPanel.SetActive(false);
-
         if (orderIdText) orderIdText.text = $"Заказ #{order.id}";
         if (pickupText) pickupText.text = $"Забрать: {order.box.pickupAddress}";
         if (deliveryText) deliveryText.text = $"Доставить: {order.dropoff.deliveryAddress}";
@@ -79,8 +77,8 @@ public class OrderScreenUI : MonoBehaviour
     {
         if (orderInfoPanel) orderInfoPanel.SetActive(false);
         if (noOrderPanel) noOrderPanel.SetActive(true);
-        if (noOrderText) noOrderText.text = "ОЖИДАНИЕ ЗАКАЗА...";
-
+        if (noOrderText) noOrderText.text = "Ожидание заказа...";
+        
         if (actionButton) actionButton.interactable = false;
         if (actionButtonText) actionButtonText.text = "Нет заказа";
     }
@@ -101,7 +99,6 @@ public class OrderScreenUI : MonoBehaviour
     void OnActionButtonClick()
     {
         if (orderManager == null || !orderManager.HasActiveOrder || isGameOver) { return; }
-
         if (!orderManager.IsOrderStarted) { orderManager.StartOrder(); }
         else
         {
@@ -113,14 +110,12 @@ public class OrderScreenUI : MonoBehaviour
         }
     }
 
-
     public void ShowGameOver(string reason)
     {
         isGameOver = true;
         if (orderInfoPanel) orderInfoPanel.SetActive(false);
         if (noOrderPanel) noOrderPanel.SetActive(false);
         if (gameOverPanel) gameOverPanel.SetActive(true);
-        if (gameOverText) gameOverText.text = reason;
         if (actionButton) actionButton.interactable = false;
     }
 }
