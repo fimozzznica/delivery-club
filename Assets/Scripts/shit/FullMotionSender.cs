@@ -17,7 +17,6 @@ public class FullMotionSender : MonoBehaviour
     [SerializeField] private float collisionIntensityScale = 3.6f;
     [SerializeField] private float vibrationIntensityScale = 0.1f;
 
-    // Для отслеживания предыдущих состояний
     private float _lastBrakeInput = 0f;
     private Vector3 _previousAcceleration = Vector3.zero;
 
@@ -126,11 +125,11 @@ public class FullMotionSender : MonoBehaviour
 [Serializable]
 public class MotionData
 {
-    public Vector3 linearAcceleration;  // m/s²
-    public Vector3 angularVelocity;     // рад/с
-    public Vector3 angularAcceleration; // рад/с²
-    public Vector3 position;            // мировые координаты
-    public Vector3 rotationEuler;       // Pitch/Yaw/Roll в градусах
+    public Vector3 linearAcceleration;  
+    public Vector3 angularVelocity;     
+    public Vector3 angularAcceleration; 
+    public Vector3 position;           
+    public Vector3 rotationEuler;  
 
     public MotionData(Vector3 linAcc, Vector3 angVel, Vector3 angAcc, Vector3 pos, Vector3 rot)
     {

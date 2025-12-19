@@ -16,17 +16,17 @@ namespace Futurift
         [SerializeField] private Terrain terrain;
         [Header("Rotation Settings")]
         [SerializeField] private float rotationSpeed = 45f;
-        [SerializeField] private float maxPitch = 15f; // Вниз
-        [SerializeField] private float minPitch = -21f; // Вверх
+        [SerializeField] private float maxPitch = 15f; 
+        [SerializeField] private float minPitch = -21f; 
         [SerializeField] private float maxYaw = 180f;
-        [SerializeField] private float maxRoll = 10f; // Макс. крен влево/вправо
-        [SerializeField] private float rollSmoothTime = 0.15f; // Время сглаживания крена
+        [SerializeField] private float maxRoll = 10f; 
+        [SerializeField] private float rollSmoothTime = 0.15f; 
         [Header("Input Actions")]
         [SerializeField] private InputActionReference moveAction;
         [SerializeField] private InputActionReference rotateAction;
         [SerializeField] private InputActionReference toggleHealthBarAction;
-        [SerializeField] private Transform xrOrigin; // Ссылка на XR Origin (если нужно синхронизировать)
-        [SerializeField] private float heightSmoothTime = 0.1f; // Время сглаживания высоты
+        [SerializeField] private Transform xrOrigin; 
+        [SerializeField] private float heightSmoothTime = 0.1f; 
         [Header("UI Settings")]
         [SerializeField] private GameObject healthBarCanvas;
         [SerializeField] private float fadeOutTime = 0.2f;
@@ -36,12 +36,13 @@ namespace Futurift
         private float currentPitch = 0f;
         private float currentYaw = 0f;
         private float currentRoll = 0f;
-        private float targetRoll = 0f; // Целевой крен
-        private float rollVelocity = 0f; // Для SmoothDamp
-        private float heightVelocity = 0f; // Для сглаживания высоты
+        private float targetRoll = 0f; 
+        private float rollVelocity = 0f; 
+        private float heightVelocity = 0f; 
         private bool isWalking = false;
         private bool isRotating = false;
         private bool isDead = false;
+
         private void Awake()
         {
             var udpOptions = new UdpOptions
@@ -54,13 +55,13 @@ namespace Futurift
             if (rb == null)
             {
                 rb = gameObject.AddComponent<Rigidbody>();
-                rb.isKinematic = false; // Динамический режим
-                rb.freezeRotation = true; // Для ручного управления
-                rb.collisionDetectionMode = CollisionDetectionMode.Continuous; // Для точных столкновений
-                rb.linearDamping = 5f; // Увеличим сопротивление
+                rb.isKinematic = false; 
+                rb.freezeRotation = true; 
+                rb.collisionDetectionMode = CollisionDetectionMode.Continuous; 
+                rb.linearDamping = 5f; 
             }
             Vector3 initialRotation = transform.eulerAngles;
-            if (transform.forward.z < 0) // Если Forward по -Z
+            if (transform.forward.z < 0) 
             {
             }
             currentYaw = Mathf.Repeat(initialRotation.y, 360f);
@@ -91,7 +92,6 @@ namespace Futurift
 
         private void OnPlayerDeath()
         {
-            // Останавливаем FutuRiftController
             _controller.Pitch = 0f;
             _controller.Roll = 0f;
         }
@@ -107,11 +107,11 @@ namespace Futurift
         {
             Vector2 moveInput = moveAction.action.ReadValue<Vector2>();
             Vector2 rotateInput = rotateAction.action.ReadValue<Vector2>();
-            if (moveInput.magnitude < 0.3f) moveInput = Vector2.zero; // Мёртвая зона для движения
-            if (rotateInput.magnitude < 0.3f) rotateInput = Vector2.zero; // Мёртвая зона для поворота
+            if (moveInput.magnitude < 0.3f) moveInput = Vector2.zero; 
+            if (rotateInput.magnitude < 0.3f) rotateInput = Vector2.zero; 
 
             Vector3 moveDelta = (transform.forward * moveInput.y + transform.right * moveInput.x) * moveSpeed * Time.fixedDeltaTime;
-            if (moveInput.magnitude < 0.1f) moveDelta.x = 0; // Принудительное обнуление бокового смещения
+            if (moveInput.magnitude < 0.1f) moveDelta.x = 0; 
             Vector3 newPosition = rb.position + moveDelta;
 
             rb.MovePosition(newPosition);
@@ -121,11 +121,11 @@ namespace Futurift
                 if (Mathf.Abs(rb.linearVelocity.x) < 0.2f) rb.linearVelocity = new Vector3(0, rb.linearVelocity.y, rb.linearVelocity.z);
                 if (Mathf.Abs(rb.linearVelocity.y) < 0.2f) rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0, rb.linearVelocity.z);
                 if (Mathf.Abs(rb.linearVelocity.z) < 0.2f) rb.linearVelocity = new Vector3(rb.linearVelocity.x, rb.linearVelocity.y, 0);
-                rb.Sleep(); // Усыпляем при остановке
+                rb.Sleep(); 
             }
             else
             {
-                rb.WakeUp(); // Пробуждаем при движении
+                rb.WakeUp(); 
             }
 
             if (xrOrigin != null && moveInput.magnitude < 0.1f)
@@ -139,13 +139,13 @@ namespace Futurift
             currentPitch -= rotateInput.y * rotationSpeed * Time.fixedDeltaTime;
             currentPitch = Mathf.Clamp(currentPitch, minPitch, maxPitch);
 
-            targetRoll = -moveInput.x * maxRoll; // Рассчитываем целевой крен
+            targetRoll = -moveInput.x * maxRoll;
             targetRoll = Mathf.Clamp(targetRoll, -maxRoll, maxRoll);
 
 
-            if (Mathf.Abs(moveInput.x) < 0.3f) // Используем тот же порог, что для moveInput
+            if (Mathf.Abs(moveInput.x) < 0.3f) 
             {
-                targetRoll = 0f; // Плавно возвращаем к нулю
+                targetRoll = 0f; 
             }
             currentRoll = Mathf.SmoothDamp(currentRoll, targetRoll, ref rollVelocity, rollSmoothTime);
 

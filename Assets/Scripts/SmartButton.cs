@@ -3,7 +3,7 @@ using System.Reflection;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using Bhaptics.SDK2; // если не используешь bhaptics, закомментируй вызовы
+using Bhaptics.SDK2; 
 
 public enum HandSide { Left, Right, Unknown }
 
@@ -15,15 +15,12 @@ public class SmartButtonUniversal : MonoBehaviour, IPointerClickHandler
     public string rightEffect = "right_select";
     public bool debug = true;
 
-    // Последняя обнаруженная рука (обновляется при кликах)
     HandSide lastHand = HandSide.Unknown;
 
-    // --- IPointerClickHandler ---
     public void OnPointerClick(PointerEventData eventData)
     {
         try
         {
-            // 1) Сначала пробуем получить interactor через XRUIInputModule (reflection)
             Component interactorComponent = TryGetInteractorComponentFromXRUI(eventData.pointerId);
             if (interactorComponent != null)
             {
@@ -32,7 +29,6 @@ public class SmartButtonUniversal : MonoBehaviour, IPointerClickHandler
             }
             else
             {
-                // 2) Фолбэк: используем pointerPressRaycast.gameObject (UI hit)
                 if (eventData.pointerPressRaycast.gameObject != null)
                 {
                     if (debug) Debug.Log("[SmartButtonUniversal] XRUI GetInteractor failed - using pointerPressRaycast.gameObject: " + eventData.pointerPressRaycast.gameObject.name);
@@ -44,7 +40,7 @@ public class SmartButtonUniversal : MonoBehaviour, IPointerClickHandler
                 }
             }
 
-            // Лог и воспроизведение хаптика
+            // воспроизведение хаптика
             if (lastHand == HandSide.Left)
             {
                 if (debug) Debug.Log("[SmartButtonUniversal] Playing LEFT haptic");
@@ -66,7 +62,7 @@ public class SmartButtonUniversal : MonoBehaviour, IPointerClickHandler
         }
     }
 
-    // --- Попытаться получить Component интерактора через XRUIInputModule.GetInteractor(pointerId)
+    // получить Component интерактора через XRUIInputModule.GetInteractor(pointerId)
     Component TryGetInteractorComponentFromXRUI(int pointerId)
     {
         var es = EventSystem.current;
@@ -76,7 +72,7 @@ public class SmartButtonUniversal : MonoBehaviour, IPointerClickHandler
             return null;
         }
 
-        // Ищем компонент на EventSystem с именем "XRUIInputModule" (может быть в пространстве имён UnityEngine.XR.Interaction.Toolkit.UI)
+        // ищем компонент на EventSystem с именем "XRUIInputModule" (может быть в пространстве имён UnityEngine.XR.Interaction.Toolkit.UI)
         Component module = null;
         var comps = es.GetComponents<Component>();
         foreach (var c in comps)
@@ -96,7 +92,7 @@ public class SmartButtonUniversal : MonoBehaviour, IPointerClickHandler
             return null;
         }
 
-        // Попробуем найти метод GetInteractor(int) через reflection
+        // пробуем найти метод GetInteractor(int) через reflection
         var modType = module.GetType();
         MethodInfo getInteractorMethod = modType.GetMethod("GetInteractor", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new Type[] { typeof(int) }, null);
 
@@ -115,7 +111,7 @@ public class SmartButtonUniversal : MonoBehaviour, IPointerClickHandler
                 return null;
             }
 
-            // Обычно возвращаемый объект реализует IUIInteractor и при этом является Component (реализация в Unity)
+            // обфчно возвращаемый объект реализует IUIInteractor и при этом является Component (реализация в Unity)
             if (interactorObj is Component comp)
                 return comp;
 
@@ -151,7 +147,7 @@ public class SmartButtonUniversal : MonoBehaviour, IPointerClickHandler
         Transform cur = t;
         while (cur != null && depth < maxDepth)
         {
-            // 1) Ищем компонент с именем "ControllerHand" (если у тебя есть такой)
+            // Ищем компонент с именем "ControllerHand" 
             var comp = cur.GetComponent("ControllerHand");
             if (comp != null)
             {
@@ -183,7 +179,7 @@ public class SmartButtonUniversal : MonoBehaviour, IPointerClickHandler
                 if (n.Contains("right")) return HandSide.Right;
             }
 
-            // 2) По имени объекта (популярные варианты)
+            // По имени объекта 
             var name = cur.name.ToLower();
             if (name.Contains("left") || name.Contains("lhand") || name.Contains("lh") || name.Contains("hand_l"))
                 return HandSide.Left;
@@ -194,7 +190,7 @@ public class SmartButtonUniversal : MonoBehaviour, IPointerClickHandler
             depth++;
         }
 
-        // 3) Доп. попытка: посмотреть сам корень transform.root.name
+        // доп вар: посмотреть сам корень transform.root.name
         var rootName = t.root != null ? t.root.name.ToLower() : "";
         if (!string.IsNullOrEmpty(rootName))
         {
@@ -206,7 +202,7 @@ public class SmartButtonUniversal : MonoBehaviour, IPointerClickHandler
         return HandSide.Unknown;
     }
 
-    // Воспроизведение хаптика (обернуто исключениями)
+    // воспроизведение хаптика (обернуто исключениями)
     void PlayHaptic(string effect)
     {
         if (string.IsNullOrEmpty(effect))
@@ -217,7 +213,7 @@ public class SmartButtonUniversal : MonoBehaviour, IPointerClickHandler
 
         try
         {
-            // Примитивный вызов bhaptics. Подставь свою сигнатуру, если отличается.
+            // Примитивный вызов bhaptics
             BhapticsLibrary.Play(effect, 0, 1, 1, 0, 0);
         }
         catch (Exception e)
@@ -226,7 +222,7 @@ public class SmartButtonUniversal : MonoBehaviour, IPointerClickHandler
         }
     }
 
-    // Помощник — печатает путь от корня до transform
+    // печатает путь от корня до transform
     string DescribeTransform(Transform t)
     {
         if (t == null) return "null";
