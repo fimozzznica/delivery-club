@@ -102,5 +102,4 @@ public class Box : MonoBehaviour
         if (!IsAssigned || orderManager == null) { return false; }
         return orderManager.CanPickupBox(this);
     }
-
 }

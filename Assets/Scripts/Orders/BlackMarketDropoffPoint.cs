@@ -30,13 +30,7 @@ public class BlackMarketDropoffPoint : MonoBehaviour
         if (orderManager == null) { orderManager = FindObjectOfType<OrderManager>(); }
         if (gameStateManager == null) { gameStateManager = FindObjectOfType<GameStateManager>(); }
     }
-
-    void Reset()
-    {
-        var c = GetComponent<Collider>();
-        if (c) { c.isTrigger = true; }
-    }
-
+    
     void OnTriggerEnter(Collider other)
     {
         var box = other.GetComponentInParent<Box>();

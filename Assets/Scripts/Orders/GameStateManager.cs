@@ -1,28 +1,25 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-
-
 public class GameStateManager : MonoBehaviour
 {
     public bool IsInBlackMarketDeal { get; private set; }
     public bool IsGameOver { get; private set; }
 
     [Header("Police Detection")]
-    [Tooltip("Радиус проверки полицейских при начале сделки")]
+    [Tooltip("Радиус проверки полицейских")]
     public float policeDetectionRadius = 15f;
 
     [Header("References")]
-    [Tooltip("Экран Game Over (опционально)")]
+    [Tooltip("Экран Game Over")]
     public GameObject gameOverScreen;
 
     [Tooltip("UI экран заказов для отображения Game Over")]
     public OrderScreenUI orderScreenUI;
 
-    [Tooltip("Transform игрока (обычно Main Camera или XR Origin)")]
+    [Tooltip("Transform игрока")]
     public Transform playerTransform;
-
-    [Header("Player Movement (VR)")]
+    
     [Tooltip("Компонент движения игрока для блокировки при поимке")]
     public MonoBehaviour movementProvider;
 
@@ -52,7 +49,6 @@ public class GameStateManager : MonoBehaviour
         allPolice.AddRange(FindObjectsOfType<PoliceOfficer>());
     }
 
-
     public void StartBlackMarketDeal()
     {
         if (IsGameOver) { return; }
@@ -81,14 +77,12 @@ public class GameStateManager : MonoBehaviour
         DisablePlayerMovement();
         GameOver("Вас поймали полицейские!");
     }
-
-
+    
     public void EndBlackMarketDeal()
     {
         if (IsGameOver) { return; }
         IsInBlackMarketDeal = false;
     }
-
 
     void DisablePlayerMovement()
     {
@@ -96,8 +90,7 @@ public class GameStateManager : MonoBehaviour
         if (movementProvider != null) { movementProvider.enabled = false; }
         movementDisabled = true;
     }
-
-
+    
     void EnablePlayerMovement()
     {
         if (!movementDisabled) { return; }
@@ -114,8 +107,7 @@ public class GameStateManager : MonoBehaviour
         if (orderScreenUI != null) { orderScreenUI.ShowGameOver(reason); }
         if (gameOverScreen != null) { gameOverScreen.SetActive(true); }
     }
-
-
+    
     public void RestartGame()
     {
         Time.timeScale = 1f;

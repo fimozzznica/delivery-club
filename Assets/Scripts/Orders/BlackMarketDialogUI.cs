@@ -6,81 +6,28 @@ using TMPro;
 
 public class BlackMarketDialogUI : MonoBehaviour
 {
-    [Header("Main Panel")]
-    [Tooltip("Главная панель диалога")]
     public GameObject dialogPanel;
-
-    [Header("Question Panel (Состояние 1)")]
-    [Tooltip("Панель с вопросом 'Что везёшь?'")]
     public GameObject questionPanel;
-
-    [Tooltip("Текст вопроса")]
     public TextMeshProUGUI questionText;
-
-    [Tooltip("Кнопка с названием товара")]
     public Button itemNameButton;
-
-    [Tooltip("Текст на кнопке с названием товара")]
     public TextMeshProUGUI itemNameButtonText;
-
-    [Header("Offer Panel (Состояние 2)")]
-    [Tooltip("Панель с предложением о покупке")]
     public GameObject offerPanel;
-
-    [Tooltip("Текст предложения")]
     public TextMeshProUGUI offerText;
-
-    [Tooltip("Кнопка 'Продать'")]
     public Button sellButton;
-
-    [Tooltip("Кнопка 'Отказаться'")]
     public Button declineButton;
-
-    [Tooltip("Кнопка информации (i)")]
     public Button infoButton;
-
-    [Header("Info Panel (Состояние 3)")]
-    [Tooltip("Информационная панель")]
     public GameObject infoPanel;
-
-    [Tooltip("Текст информации")]
     public TextMeshProUGUI infoText;
-
-    [Tooltip("Кнопка 'Назад' из информации")]
     public Button backFromInfoButton;
-
-    [Header("Farewell Panel (После отказа)")]
-    [Tooltip("Панель с прощанием")]
     public GameObject farewellPanel;
-
-    [Tooltip("Текст прощания")]
     public TextMeshProUGUI farewellText;
-
-    [Header("Settings")]
-    [Tooltip("Время отображения прощания перед исчезновением (секунды)")]
     public float farewellDuration = 3f;
-
-    [Header("Dialog Texts")]
-    [Tooltip("Текст вопроса")]
     public string questionMessage = "Эй, ты на доставке? Что везёшь?";
-
-    [Tooltip("Шаблон текста предложения (используйте {0} для цены)")]
     public string offerTemplate = "Беру за ${0}, по рукам?";
-
-    [Tooltip("Текст информации")]
     public string infoMessage = "Сделки со скупщиком приносят больше денег, но вы теряете рейтинг";
-
-    [Tooltip("Текст прощания")]
     public string farewellMessage = "Ну ладно, ещё увидимся...";
-
-    [Header("References")]
-    [Tooltip("Ссылка на BlackMarketDealer")]
     public BlackMarketDealer dealer;
-
-    [Tooltip("Ссылка на OrderManager")]
     public OrderManager orderManager;
-
-    [Tooltip("Ссылка на GameStateManager")]
     public GameStateManager gameStateManager;
 
     private enum DialogState
@@ -196,7 +143,6 @@ public class BlackMarketDialogUI : MonoBehaviour
         if (infoPanel != null) { infoPanel.SetActive(false); }
         if (farewellPanel != null) { farewellPanel.SetActive(true); }
         if (farewellText != null) { farewellText.text = farewellMessage; }
-
         if (farewellCoroutine != null) { StopCoroutine(farewellCoroutine); }
 
         farewellCoroutine = StartCoroutine(HideAfterDelay());

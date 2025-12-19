@@ -11,8 +11,7 @@ public class OrderManager : MonoBehaviour
     public class OrderEvent : UnityEvent<Order> { }
     [System.Serializable]
     public class OrderStateEvent : UnityEvent { }
-
-    [Header("События")]
+    
     public OrderEvent OnOrderCreated = new OrderEvent();
     public OrderEvent OnOrderCompleted = new OrderEvent();
     public OrderStateEvent OnOrderStateChanged = new OrderStateEvent();
@@ -33,7 +32,6 @@ public class OrderManager : MonoBehaviour
 
     [Range(0f, 5f)]
     public float playerRating = 4.8f;
-
     public int currentLevel = 4;
 
     [Serializable]
@@ -49,8 +47,8 @@ public class OrderManager : MonoBehaviour
     private int _idCounter = 0;
     private bool _orderStarted = false;
 
-    private const float BASE_DELIVERY_PRICE = 200f;
-    private const float PACKAGE_VALUE_PERCENT = 0.03f;
+    private const float baseDeliveryPrice = 200f;
+    private const float packageValuePercent = 0.03f;
 
     public Order CurrentOrder => _currentOrder;
     public bool HasActiveOrder => _currentOrder != null;
@@ -119,8 +117,7 @@ public class OrderManager : MonoBehaviour
 
         bool parentWasInactive = box.transform.parent != null &&
                                  !box.transform.parent.gameObject.activeInHierarchy;
-
-
+        
         _currentOrder = new Order
         {
             id = NewId(),
@@ -142,17 +139,16 @@ public class OrderManager : MonoBehaviour
 
     public float CalculateDeliveryPrice(Box box, DropoffPoint dropoff)
     {
-        if (box == null || dropoff == null) { return BASE_DELIVERY_PRICE; }
+        if (box == null || dropoff == null) { return baseDeliveryPrice; }
 
-        float price = BASE_DELIVERY_PRICE;
-        price += box.price * PACKAGE_VALUE_PERCENT;
+        float price = baseDeliveryPrice;
+        price += box.price * packageValuePercent;
         float distance = Vector3.Distance(box.transform.position, dropoff.transform.position);
         price += distance * 0.03f;
 
         return Mathf.Round(price);
     }
-
-
+    
     public float GetCurrentOrderPrice()
     {
         if (!HasActiveOrder) { return 0f; }
@@ -162,7 +158,6 @@ public class OrderManager : MonoBehaviour
     public bool StartOrder()
     {
         if (!HasActiveOrder) { return false; }
-
         if (_orderStarted) { return false; }
 
         _orderStarted = true;
@@ -183,9 +178,7 @@ public class OrderManager : MonoBehaviour
         if (!HasActiveOrder) { return false; }
         if (!_orderStarted) { return false; }
         if (_currentOrder.box != box) { return false; }
-
         if (_currentOrder.dropoff == null) { return false; }
-
         if (_currentOrder.dropoff != atDropoff) { return false; }
 
         Order completedOrder = _currentOrder;

@@ -9,8 +9,6 @@ public class DropoffPoint : MonoBehaviour
 
     [HideInInspector] public OrderManager manager;
 
-    void Awake() { var collider = GetComponent<Collider>(); }
-
     void Reset()
     {
         var c = GetComponent<Collider>();
