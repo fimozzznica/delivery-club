@@ -3,7 +3,6 @@ using UnityEngine;
 [RequireComponent(typeof(AudioSource))]
 public class PoliceOfficer : MonoBehaviour
 {
-    [Header("Settings")]
     [Tooltip("Радиус обнаружения сделки")]
     public float detectionRadius = 10f;
 
@@ -12,12 +11,10 @@ public class PoliceOfficer : MonoBehaviour
 
     [Tooltip("Дистанция поимки игрока")]
     public float catchDistance = 1f;
-
-    [Header("Audio")]
+    
     [Tooltip("Звук сирены")]
     public AudioClip sirenSound;
-
-    [Header("References")]
+    
     [Tooltip("Менеджер состояния игры")]
     public GameStateManager gameStateManager;
 

@@ -100,6 +100,4 @@ public class BlackMarketDealer : MonoBehaviour
 
         if (dialogUI != null) { dialogUI.ForceHide(); }
     }
-
-    public bool IsPlayerInRange() { return playerInRange; }
 }

@@ -31,48 +31,38 @@ public class FullMotionSender : MonoBehaviour
 
     void FixedUpdate()
     {
-        // === 1. Линейное ускорение ===
         Vector3 currentVelocity = vehicleRigidbody.linearVelocity;
         Vector3 linearAcc = (currentVelocity - lastVelocity) / Time.fixedDeltaTime;
         lastVelocity = currentVelocity;
-
-        // === 2. Угловая скорость ===
+        
         Vector3 angularVel = vehicleRigidbody.angularVelocity;
         Vector3 angularAcc = (angularVel - lastAngularVelocity) / Time.fixedDeltaTime;
         lastAngularVelocity = angularVel;
-
-        // === 3. Абсолютное положение в пространстве ===
+        
         Vector3 position = vehicleRigidbody.transform.position;
         Vector3 rotationEuler = vehicleRigidbody.transform.rotation.eulerAngles;
-
-        // === 4. Формируем структуру данных для капсулы ===
+        
         MotionData data = new MotionData(linearAcc, angularVel, angularAcc, position, rotationEuler);
-
-        // === 5. Обработка тактильной обратной связи ===
+        
         if (enableHaptics)
         {
             HandleHaptics(linearAcc, currentVelocity, angularVel);
         }
-
-        //// === 6. Пример вывода / отправки ===
-        //string json = JsonUtility.ToJson(data);
-        //Debug.Log(json); // здесь можно отправлять в капсулу
 
         _previousAcceleration = linearAcc;
     }
 
     private void HandleHaptics(Vector3 linearAcceleration, Vector3 currentVelocity, Vector3 angularVelocity)
     {
-        // Преобразуем ускорения в локальное пространство транспортного средства
         Vector3 localAcceleration = transform.InverseTransformDirection(linearAcceleration);
 
-        float forwardAccel = localAcceleration.z;  // Ускорение вперед/назад
-        float lateralAccel = localAcceleration.x;  // Боковое ускорение
-        float verticalAccel = localAcceleration.y; // Вертикальное ускорение
+        float forwardAccel = localAcceleration.z;  
+        float lateralAccel = localAcceleration.x;  
+        float verticalAccel = localAcceleration.y;
 
         float forwardSpeed = Vector3.Dot(currentVelocity, transform.forward);
 
-        // --- Давление в спину (ускорение вперед) ---
+        // Давление в спину
         if (forwardAccel > accelThreshold && forwardSpeed > 1f)
         {
             float intensity = Mathf.Clamp01(forwardAccel / 10f);
@@ -81,7 +71,7 @@ public class FullMotionSender : MonoBehaviour
                 Debug.Log($"[HAPTICS] Давление кресла: {intensity:F2}, Accel: {forwardAccel:F2}");
         }
 
-        // --- Поворот влево ---
+        // Поворот влево
         if (lateralAccel < -lateralThreshold)
         {
             float intensity = Mathf.Clamp01(Mathf.Abs(lateralAccel) / 10f);
@@ -90,7 +80,7 @@ public class FullMotionSender : MonoBehaviour
                 Debug.Log($"[HAPTICS] Поворот влево: {intensity:F2}, Accel: {lateralAccel:F2}");
         }
 
-        // --- Поворот вправо ---
+        // Поворот вправо
         if (lateralAccel > lateralThreshold)
         {
             float intensity = Mathf.Clamp01(Mathf.Abs(lateralAccel) / 10f);
@@ -100,12 +90,12 @@ public class FullMotionSender : MonoBehaviour
         }
     }
 
-    // === Событие столкновения ===
+    // Событие столкновения
     void OnCollisionEnter(Collision collision)
     {
         if (!enableHaptics) return;
 
-        // Дополнительное ускорение от удара
+        // ускорение от удара
         Vector3 impactForce = collision.impulse / Time.fixedDeltaTime;
         Vector3 impactAcc = impactForce / vehicleRigidbody.mass;
 
@@ -115,13 +105,11 @@ public class FullMotionSender : MonoBehaviour
 
         if (debugHaptics)
             Debug.Log($"[HAPTICS] Столкновение: {intensity:F2}, Force: {impactAcc.magnitude:F2}");
-
-        // Можно добавить к последнему ускорению для капсулы
+        
         lastVelocity += impactAcc * Time.fixedDeltaTime;
     }
 }
 
-// ===== Структура данных для капсулы =====
 [Serializable]
 public class MotionData
 {

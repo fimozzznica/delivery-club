@@ -5,12 +5,10 @@ public class GameStateManager : MonoBehaviour
 {
     public bool IsInBlackMarketDeal { get; private set; }
     public bool IsGameOver { get; private set; }
-
-    [Header("Police Detection")]
+    
     [Tooltip("Радиус проверки полицейских")]
     public float policeDetectionRadius = 15f;
-
-    [Header("References")]
+    
     [Tooltip("Экран Game Over")]
     public GameObject gameOverScreen;
 
@@ -38,7 +36,6 @@ public class GameStateManager : MonoBehaviour
             var player = GameObject.FindGameObjectWithTag("Player");
             if (player != null) { playerTransform = player.transform; }
         }
-
         if (orderScreenUI == null) { orderScreenUI = FindAnyObjectByType<OrderScreenUI>(); }
         RefreshPoliceList();
     }
@@ -59,9 +56,7 @@ public class GameStateManager : MonoBehaviour
     void CheckPoliceProximity()
     {
         if (playerTransform == null) { return; }
-
         bool policeNearby = false;
-
         foreach (var police in allPolice)
         {
             if (police == null) { continue; }
@@ -106,14 +101,6 @@ public class GameStateManager : MonoBehaviour
         DisablePlayerMovement();
         if (orderScreenUI != null) { orderScreenUI.ShowGameOver(reason); }
         if (gameOverScreen != null) { gameOverScreen.SetActive(true); }
-    }
-    
-    public void RestartGame()
-    {
-        Time.timeScale = 1f;
-        UnityEngine.SceneManagement.SceneManager.LoadScene(
-            UnityEngine.SceneManagement.SceneManager.GetActiveScene().name
-        );
     }
 
     void OnDestroy()

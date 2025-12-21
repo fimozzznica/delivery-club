@@ -66,13 +66,11 @@ public class BoxLidController : MonoBehaviour
         if (isClosing && openTimer <= 0f)
         {
             isClosing = false;
-            Debug.Log("Closing complete");
         }
 
         if (isOpening && openTimer >= delayBetweenTopAndBottom * 2f)
         {
             isOpening = false;
-            Debug.Log("Opening complete");
         }
     }
 

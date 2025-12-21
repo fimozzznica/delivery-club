@@ -15,19 +15,14 @@ public class OrderManager : MonoBehaviour
     public OrderEvent OnOrderCreated = new OrderEvent();
     public OrderEvent OnOrderCompleted = new OrderEvent();
     public OrderStateEvent OnOrderStateChanged = new OrderStateEvent();
-
-    [Header("Объекты сцены")]
-    [Tooltip("Коробки для доставки")]
+    
     public Box[] boxes;
-
-    [Tooltip("Точки доставки (автопоиск если пусто)")]
+    
     public DropoffPoint[] dropoffs;
-
-    [Header("Генерация заказов")]
+    
     public bool autoGenerate = true;
     public float spawnInterval = 8f;
-
-    [Header("Игрок")]
+    
     public float playerBalance = 0f;
 
     [Range(0f, 5f)]
@@ -84,8 +79,7 @@ public class OrderManager : MonoBehaviour
         if (boxes == null || boxes.Length == 0) { boxes = FindObjectsOfType<Box>(true); }
         boxes = boxes.Where(b => b != null).ToArray();
     }
-
-
+    
     IEnumerator GenerateLoop()
     {
         var wait = new WaitForSeconds(spawnInterval);
@@ -96,7 +90,6 @@ public class OrderManager : MonoBehaviour
             yield return wait;
         }
     }
-
 
     public void CreateOrder()
     {
@@ -215,7 +208,6 @@ public class OrderManager : MonoBehaviour
         UpdateLevel();
     }
 
-
     void UpdateLevel()
     {
         if (playerRating >= 4.8f) { currentLevel = 4; }
@@ -223,7 +215,6 @@ public class OrderManager : MonoBehaviour
         else if (playerRating >= 4.0f) { currentLevel = 2; }
         else { currentLevel = 1; }
     }
-
 
     public bool IsLevelUnlocked(int level)
     {
@@ -233,7 +224,6 @@ public class OrderManager : MonoBehaviour
         if (level == 4) { return playerRating >= 4.8f; }
         return false;
     }
-
 
     public void ClearCurrentOrder()
     {

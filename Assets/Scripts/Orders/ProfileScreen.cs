@@ -1,14 +1,10 @@
 using UnityEngine;
 using TMPro;
 
-
 public class ProfileScreen : MonoBehaviour
 {
-    [Header("UI Elements")]
     public TextMeshProUGUI ratingText;
     public TextMeshProUGUI completedOrdersText;
-
-    [Header("References")]
     public OrderManager orderManager;
 
     private int completedOrders = 0;
@@ -36,7 +32,7 @@ public class ProfileScreen : MonoBehaviour
     void UpdateDisplay()
     {
         if (orderManager == null) { return; }
-        if (ratingText) { ratingText.text = $"{orderManager.PlayerRating:F1} ★"; }
+        if (ratingText) { ratingText.text = $"{orderManager.PlayerRating:F1}"; }
         if (completedOrdersText) { completedOrdersText.text = completedOrders.ToString(); }
     }
 }

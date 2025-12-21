@@ -1,9 +1,7 @@
 using UnityEngine;
 
-
 public class UIManager : MonoBehaviour
 {
-    [Header("UI Panels")]
     public GameObject orderScreenPanel;
     public GameObject profileScreenPanel;
 
@@ -13,11 +11,5 @@ public class UIManager : MonoBehaviour
     {
         if (orderScreenPanel) orderScreenPanel.SetActive(true);
         if (profileScreenPanel) profileScreenPanel.SetActive(false);
-    }
-
-    public void ShowProfileScreen()
-    {
-        if (orderScreenPanel) orderScreenPanel.SetActive(false);
-        if (profileScreenPanel) profileScreenPanel.SetActive(true);
     }
 }
